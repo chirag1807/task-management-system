@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/chirag1807/task-management-system/api/controller"
+	"github.com/chirag1807/task-management-system/api/middleware"
 	"github.com/chirag1807/task-management-system/api/repository"
 	"github.com/chirag1807/task-management-system/api/service"
 	"github.com/go-chi/chi/v5"
@@ -31,7 +32,7 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client) *chi.Mux {
 	router.Route("/api/auth", func(r chi.Router) {
 		r.Post("/user-registration", authController.UserRegistration)
 		r.Post("/user-login", authController.UserLogin)
-		r.Post("/reset-token", authController.ResetToken)
+		r.With(middleware.VerifyToken(1)).Post("/reset-token", authController.ResetToken)
 	})
 
 	router.Route("/api/task", func(r chi.Router) {
@@ -51,7 +52,12 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client) *chi.Mux {
 	})
 
 	router.Route("/api/user", func(r chi.Router) {
-		r.Put("/update-user-profile", userController.UpdateUserProfile)
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.VerifyToken(0))
+			r.Get("/get-public-profile-users", userController.GetAllPublicProfileUsers)
+			r.Get("/get-my-details", userController.GetMyDetails)
+			r.Put("/update-user-profile", userController.UpdateUserProfile)
+		})
 		r.Post("/send-otp-to-user", userController.SendOTPToUser)
 		r.Post("/verify-otp", userController.VerifyOTP)
 		r.Put("/reset-user-password", userController.ResetUserPassword)

@@ -3,6 +3,7 @@ package constant
 const (
 	TOKEN_REFRESH             = "Token Refresh Successfully."
 	USER_REGISTRATION_SUCCEED = "User Registration Done Successfully."
+	USER_PROFILE_UPDATED      = "User Profile Updated Successfully."
 	ARTICLE_ADDED             = "Article Added Successfully."
 	ARTICLE_UPDATED           = "Article Updated Successfully."
 	ARTICLE_DELETED           = "Article Deleted Successfully."
@@ -16,6 +17,13 @@ const (
 	TOPIC_DELETED             = "Topic Deleted Successfully."
 	INVALID_TOKEN             = "This Token is Invalid."
 	INVALID_CLAIMS            = "Token Cliams are Invalid."
+)
+
+type contextKey string
+
+var (
+	TokenKey  = contextKey("token")
+	UserIdKey = contextKey("userId")
 )
 
 // below I have declared keys for body, quer params and url params validations.

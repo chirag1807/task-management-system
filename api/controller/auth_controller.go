@@ -140,7 +140,7 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a authController) ResetToken(w http.ResponseWriter, r *http.Request) {
-	token := r.Context().Value("token").(string)
+	token := r.Context().Value(constant.TokenKey).(string)
 
 	userId, err := a.authService.ResetToken(token)
 	if err != nil {

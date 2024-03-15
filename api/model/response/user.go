@@ -15,3 +15,7 @@ type UserWithTokens struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 }
+
+type Users struct {
+	Users []User `json:"users"`
+}
