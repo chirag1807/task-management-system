@@ -55,7 +55,7 @@ func (a authRepository) UserLogin(user request.User) (response.User, string, err
 
 	passwordMatched := utils.VerifyPassword(user.Password, dbUser.Password)
 	if !passwordMatched {
-		return response.User{}, "", errorhandling.PasswordNotMatch
+		return response.User{}, "", errorhandling.PasswordNotMatched
 	}
 
 	refreshToken, err := utils.CreateJWTToken(time.Now().Add(time.Hour*24*7), dbUser.ID)

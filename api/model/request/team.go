@@ -15,3 +15,8 @@ type TeamMembers struct {
 	TeamID   int64   `json:"teamID,omitempty"`
 	MemberID []int64 `json:"memberID"`
 }
+
+type CreateTeam struct {
+	TeamDetails Team        `json:"teamDetails"`
+	TeamMembers TeamMembers `json:"teamMembers"`
+}

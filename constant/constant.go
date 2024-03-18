@@ -17,6 +17,11 @@ const (
 	TOPIC_DELETED             = "Topic Deleted Successfully."
 	INVALID_TOKEN             = "This Token is Invalid."
 	INVALID_CLAIMS            = "Token Cliams are Invalid."
+	OTP_SENT                  = "OTP Sent to given Email ID Successfully."
+	TEAM_CREATED              = "Team Created Successfully."
+	MEMBERS_ADDED_TO_TEAM     = "Members Added to Team."
+	MEMBERS_REMOVED_FROM_TEAM = "Members Removed from Team."
+	LEFT_TEAM                 = "Team Left Successfully."
 )
 
 type contextKey string

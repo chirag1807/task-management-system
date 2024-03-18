@@ -16,6 +16,10 @@ func VerifyToken(flag int) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
+			if token == "" {
+				errorhandling.SendErrorResponse(w, errorhandling.TokenNotFound)
+				return
+			}
 			token = token[7:]
 			userId, err := utils.VerifyJWTToken(token)
 			if err != nil {

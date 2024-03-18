@@ -9,7 +9,7 @@ type Team struct {
 	Name        string      `json:"name"`
 	CreatedBy   int64       `json:"createdBy"`
 	CreatedAt   time.Time   `json:"createdAt"`
-	TeamMembers TeamMembers `json:"teamMembers,omitempty"`
+	TeamMembers *TeamMembers `json:"teamMembers,omitempty"`
 }
 
 type TeamMembers struct {

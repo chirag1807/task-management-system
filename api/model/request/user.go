@@ -1,19 +1,11 @@
 package request
 
 type User struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Bio       string `json:"bio"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	Profile   string `json:"profile"`
-}
-
-type UpdateUser struct {
-	FirstName *string `json:"firstName"`
-	LastName  *string `json:"lastName"`
-	Bio       *string `json:"bio"`
-	Email     *string `json:"email"`
-	Password  *string `json:"password"`
-	Profile   *string `json:"profile"`
+	FirstName   string `json:"firstName" db:"first_name"`
+	LastName    string `json:"lastName" db:"last_name"`
+	Bio         string `json:"bio" db:"bio"`
+	Email       string `json:"email" db:"email"`
+	Password    string `json:"password" db:"password"`
+	NewPassword string `json:"newPassword" db:"password"`
+	Profile     string `json:"profile" db:"profile"`
 }

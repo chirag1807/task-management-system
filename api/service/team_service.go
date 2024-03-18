@@ -8,10 +8,11 @@ import (
 
 type TeamService interface {
 	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) error
-	AddMembersToTeam(teamMembersToAdd request.TeamMembers) error
-	RemoveMembersFromTeam(teamMembersToRemove request.TeamMembers) error
-	GetAllTeams(userID int64, flag string) ([]response.Team, error)
-	GetTeamMembers(teamID int64) (response.TeamMembers, error)
+	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error
+	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error
+	GetAllTeams(userID int64, flag int) ([]response.Team, error)
+	GetTeamMembers(teamID int64) ([]response.User, error)
+	LeftTeam(userID int64, teamID int64) (error)
 }
 
 type teamService struct {
@@ -28,18 +29,22 @@ func (t teamService) CreateTeam(teamToCreate request.Team, teamMembers request.T
 	return t.teamRepository.CreateTeam(teamToCreate, teamMembers)
 }
 
-func (t teamService) AddMembersToTeam(teamMembersToAdd request.TeamMembers) error {
-	return t.teamRepository.AddMembersToTeam(teamMembersToAdd)
+func (t teamService) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error {
+	return t.teamRepository.AddMembersToTeam(teamCreatedBy, teamMembersToAdd)
 }
 
-func (t teamService) RemoveMembersFromTeam(teamMembersToRemove request.TeamMembers) error {
-	return t.teamRepository.RemoveMembersFromTeam(teamMembersToRemove)
+func (t teamService) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error {
+	return t.teamRepository.RemoveMembersFromTeam(teamCreatedBy, teamMembersToRemove)
 }
 
-func (t teamService) GetAllTeams(userID int64, flag string) ([]response.Team, error) {
+func (t teamService) GetAllTeams(userID int64, flag int) ([]response.Team, error) {
 	return t.teamRepository.GetAllTeams(userID, flag)
 }
 
-func (t teamService) GetTeamMembers(teamID int64) (response.TeamMembers, error) {
+func (t teamService) GetTeamMembers(teamID int64) ([]response.User, error) {
 	return t.teamRepository.GetTeamMembers(teamID)
+}
+
+func (t teamService) LeftTeam(userID int64, teamID int64) (error) {
+	return t.teamRepository.LeftTeam(userID, teamID)
 }

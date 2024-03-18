@@ -44,11 +44,13 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client) *chi.Mux {
 	})
 
 	router.Route("/api/team", func(r chi.Router) {
+		r.Use(middleware.VerifyToken(0))
 		r.Post("/create-team", teamController.CreateTeam)
 		r.Put("/add-members-to-team", teamController.AddMembersToTeam)
 		r.Put("/remove-members-from-team", teamController.RemoveMembersFromTeam)
 		r.Get("/get-all-teams/{Flag}", teamController.GetAllTeams)
 		r.Get("/get-team-members/{TeamID}", teamController.GetTeamMembers)
+		r.Delete("/left-team/{TeamID}", teamController.LeftTeam)
 	})
 
 	router.Route("/api/user", func(r chi.Router) {
