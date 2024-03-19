@@ -43,9 +43,7 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 	}
 	var userRequest request.User
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userRequest, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userRequest, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
@@ -98,9 +96,7 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	var userLoginRequest request.User
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userLoginRequest, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userLoginRequest, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
@@ -137,7 +133,7 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	accessToken, err := utils.CreateJWTToken(time.Now().Add(time.Hour*5), user.ID)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err) //ask sir about these like i need to send err came from utls package or custom error just like below function.
+		errorhandling.SendErrorResponse(w, err)
 		return
 	}
 

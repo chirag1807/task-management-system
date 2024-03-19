@@ -70,9 +70,7 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 	}
 	var userToUpdate request.User
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userToUpdate, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userToUpdate, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
@@ -131,8 +129,7 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 	}
 	var user request.User
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
@@ -195,8 +192,7 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var otp request.OTP
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &otp, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &otp, &requestParams, nil, nil, nil, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
@@ -240,9 +236,7 @@ func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request
 	}
 	var userEmailPassword request.User
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userEmailPassword, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userEmailPassword, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)

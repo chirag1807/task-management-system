@@ -26,12 +26,12 @@ func CreateCustomError(errorMessage string, statusCode int) error {
 }
 
 var (
-	ReadBodyError                    = CreateCustomError("Could not Read Request Body, Please Provide Valid Body.", http.StatusBadRequest)
-	ReadDataError                    = CreateCustomError("Could not Decode the Data, Please Provide Valid Data.", http.StatusBadRequest)
-	EmailvalidationError             = CreateCustomError("Email Validation Failed, Please Provide Valid Email.", http.StatusBadRequest)
-	DuplicateEmailFound              = CreateCustomError("Duplicate Email Found.", http.StatusConflict)
-	MemberExist                      = CreateCustomError("Member Already Added in Team.", http.StatusConflict)
-	RegistrationFailedError          = CreateCustomError("User Registration Failed.", http.StatusInternalServerError)
+	ReadBodyError           = CreateCustomError("Could not Read Request Body, Please Provide Valid Body.", http.StatusBadRequest)
+	ReadDataError           = CreateCustomError("Could not Decode the Data, Please Provide Valid Data.", http.StatusBadRequest)
+	EmailvalidationError    = CreateCustomError("Email Validation Failed, Please Provide Valid Email.", http.StatusBadRequest)
+	DuplicateEmailFound     = CreateCustomError("Duplicate Email Found.", http.StatusConflict)
+	MemberExist             = CreateCustomError("Member Already Added in Team.", http.StatusConflict)
+	RegistrationFailedError = CreateCustomError("User Registration Failed.", http.StatusInternalServerError)
 	// LoginFailedError                 = CreateCustomError("User Login Failed.", http.StatusUnauthorized)
 	AccessTokenExpired               = CreateCustomError("Access Token is Expired, Please Regenrate It.", http.StatusUnauthorized)
 	RefreshTokenExpired              = CreateCustomError("Access Token is Expired, Please Do Login Again.", http.StatusUnauthorized)
@@ -49,6 +49,8 @@ var (
 	ProvideValidParams               = CreateCustomError("Please Provide Valid URL Parameter to Proceed Further.", http.StatusUnprocessableEntity)
 	NotAllowed                       = CreateCustomError("You are not Allowed to Perform this Task.", http.StatusForbidden)
 	OnlyPublicMemberAllowed          = CreateCustomError("Only Public Profile Users can be Added in Team.", http.StatusBadRequest)
+	OnlyPublicUserAssignne           = CreateCustomError("Tasks can be Assgined to Only Public Profile Users.", http.StatusBadRequest)
+	OnlyPublicTeamAssignne           = CreateCustomError("Tasks can be Assgined to Only Public Profile Teams.", http.StatusBadRequest)
 	NotAMember                       = CreateCustomError("You can not Left the Meeting Because You are Not a Member of This Team.", http.StatusUnauthorized)
 	LeftAllTeamsToMakeProfilePrivate = CreateCustomError("You must Left All Teams that You are Part of to Make Your Profile Private.", http.StatusUnauthorized)
 )

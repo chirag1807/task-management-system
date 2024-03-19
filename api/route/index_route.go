@@ -36,11 +36,12 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client) *chi.Mux {
 	})
 
 	router.Route("/api/task", func(r chi.Router) {
-		router.Post("/create-task", taskController.CreateTask)
-		router.Get("/get-all-tasks/{Flag}", taskController.GetAllTasks)
-		router.Get("/get-tasks-of-team/{TeamID}", taskController.GetTasksofTeam)
-		router.Put("/update-task", taskController.UpdateTask)
-		router.Delete("/delete-task/{TaskID}", taskController.DeleteTask)
+		r.Use(middleware.VerifyToken(0))
+		r.Post("/create-task", taskController.CreateTask)
+		r.Get("/get-all-tasks/{Flag}", taskController.GetAllTasks)
+		r.Get("/get-tasks-of-team/{TeamID}", taskController.GetTasksofTeam)
+		r.Put("/update-task", taskController.UpdateTask)
+		r.Delete("/delete-task/{TaskID}", taskController.DeleteTask)
 	})
 
 	router.Route("/api/team", func(r chi.Router) {

@@ -22,6 +22,7 @@ const (
 	MEMBERS_ADDED_TO_TEAM     = "Members Added to Team."
 	MEMBERS_REMOVED_FROM_TEAM = "Members Removed from Team."
 	LEFT_TEAM                 = "Team Left Successfully."
+	TASK_CREATED              = "Task Created Successfully."
 )
 
 type contextKey string
@@ -48,13 +49,23 @@ const (
 
 	// for team model
 	TeamNameKey      = "teamDetails.name"
-	TeamMembersKey = "teamMembers"
+	TeamMembersKey   = "teamMembers"
 	TeamMembersIdKey = "teamMembers.memberID"
 
 	// for team members model
 	TeamIdKey       = "teamID"
 	TeamMemberIdKey = "memberID"
 
+	//for task model
+	TitleKey              = "title"
+	DescriptionKey        = "description"
+	DeadlineKey           = "deadline"
+	AssigneeIndividualKey = "assigneeIndividual"
+	AssigneeTeamKey       = "assigneeTeam"
+	StatusKey             = "status"
+	PriorityKey           = "priority"
+
 	// query params
-	FlagIdKey = "Flag"
+	LimitKey  = "limit"
+	OffsetKey = "offset"
 )

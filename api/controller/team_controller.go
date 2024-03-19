@@ -45,9 +45,7 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	}
 	var team request.CreateTeam
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &team, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &team, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
@@ -96,9 +94,7 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 	}
 	var teamMembersToAdd request.TeamMembers
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamMembersToAdd, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamMembersToAdd, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
@@ -143,9 +139,7 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 	}
 	var teamMembersToRemove request.TeamMembers
 
-	requestBodyData := validation.CreateCustomErrorMsg(w, r)
-
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamMembersToRemove, &requestParams, nil, nil, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamMembersToRemove, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)

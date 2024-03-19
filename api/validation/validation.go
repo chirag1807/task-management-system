@@ -11,8 +11,7 @@ import (
 )
 
 func ValidateParameters(r *http.Request, requestBody interface{}, requestParametersMap *map[string]string, requestParametersFiltersMap *map[string]string,
-	queryParametersMap *map[string]string, queryParametersFiltersMap *map[string]string, urlParamsError *[]response.InvalidParameters,
-	requestBodyData *validate.Validation) (error, error, error) {
+	queryParametersMap *map[string]string, queryParametersFiltersMap *map[string]string, urlParamsError *[]response.InvalidParameters) (error, error, error) {
 
 	var invalidParamErr []response.InvalidParameters
 	var invalidParamKeysArr []string
@@ -43,6 +42,25 @@ func ValidateParameters(r *http.Request, requestBody interface{}, requestParamet
 			}
 		}
 	}
+
+	requestParameterData, err := validate.FromRequest(r)
+	if err != nil {
+		return err, nil, nil
+	}
+
+	requestBodyData := requestParameterData.Create()
+	requestBodyData.WithMessages(map[string]string{
+		"string":   "{field} must be string only.",
+		"int":      "{field} must be integer only.",
+		"number":   "{field} must be number only.",
+		"slice":    "{field} must be an array only.",
+		"required": "{field} is required to not be empty.",
+		"minLen":   "{field} violates minimum length constraint.",
+		"maxLen":   "{field} violates maximum length constraint.",
+		"min":      "{field} violates minimum value constraint.",
+		"max":      "{field} violates maximum value constraint.",
+		"regex":    "please provide {field} in valid format.",
+	})
 
 	var requestParametersMapDereference map[string]string
 	if requestParametersMap != nil {
