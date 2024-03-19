@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/chirag1807/task-management-system/api/model/request"
@@ -19,7 +20,7 @@ type TeamRepository interface {
 	GetAllTeams(userID int64, flag int) ([]response.Team, error)
 	//flag is used for get my created teams and get teams in which i was added.
 	GetTeamMembers(teamID int64) ([]response.User, error)
-	LeftTeam(userID int64, teamID int64) (error)
+	LeftTeam(userID int64, teamID int64) error
 }
 
 type teamRepository struct {
@@ -76,6 +77,33 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 		return errorhandling.NotAllowed
 	}
 
+	var args []interface{}
+	query := `SELECT profile FROM users WHERE id IN (`
+	for i, v := range teamMembersToAdd.MemberID {
+		query += `$` + strconv.Itoa(i+1) + `, `
+		args = append(args, v)
+	}
+	query = query[:len(query)-2]
+	query += `)`
+
+	log.Println(query, args)
+
+	users, err := t.dbConn.Query(context.Background(), query, args...)
+	if err != nil {
+		return err
+	}
+	defer users.Close()
+
+	var user response.User
+	for users.Next() {
+		if err := users.Scan(&user.Profile); err != nil {
+			return err
+		}
+		if user.Profile == "Private" {
+			return errorhandling.OnlyPublicMemberAllowed
+		}
+	}
+
 	ctx := context.Background()
 	tx, err := t.dbConn.Begin(ctx)
 	if err != nil {
@@ -83,12 +111,7 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	}
 
 	batch := &pgx.Batch{}
-	var memberProfile string
 	for _, v := range teamMembersToAdd.MemberID {
-		t.dbConn.QueryRow(context.Background(), `SELECT profile FROM users WHERE id = $1`, v).Scan(&memberProfile)
-		if memberProfile == "Private"{
-			return errorhandling.OnlyPublicMemberAllowed
-		}
 		batch.Queue(`INSERT INTO team_members (team_id, member_id) VALUES ($1, $2)`, teamMembersToAdd.TeamID, v)
 	}
 
@@ -124,14 +147,13 @@ func (t teamRepository) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersTo
 		return errorhandling.NotAllowed
 	}
 
-	counter := 1
 	var args []interface{}
 	query := `DELETE FROM team_members WHERE member_id IN (`
-	for _, v := range teamMembersToRemove.MemberID {
-		query += `$` + strconv.Itoa(counter) + `, `
-		counter++
+	for i, v := range teamMembersToRemove.MemberID {
+		query += `$` + strconv.Itoa(i+1) + `, `
 		args = append(args, v)
 	}
+	query = query[:len(query)-2]
 	query += `)`
 
 	_, err := t.dbConn.Exec(context.Background(), query, args...)
@@ -150,10 +172,9 @@ func (t teamRepository) GetAllTeams(userID int64, flag int) ([]response.Team, er
 
 	if flag == 0 {
 		teams, err = t.dbConn.Query(context.Background(), `SELECT * FROM teams WHERE created_by = $1`, userID)
-	} else if flag == 1 {
+	} 
+	if flag == 1 {
 		teams, err = t.dbConn.Query(context.Background(), `SELECT * FROM teams WHERE id IN (SELECT team_id from team_members where member_id = $1)`, userID)
-	} else {
-		return teamsSlice, errorhandling.FlagNotProvided
 	}
 
 	if err != nil {
@@ -195,7 +216,7 @@ func (t teamRepository) GetTeamMembers(teamID int64) ([]response.User, error) {
 	return teamMembersSlice, nil
 }
 
-func (t teamRepository) LeftTeam(userID int64, teamID int64) (error) {
+func (t teamRepository) LeftTeam(userID int64, teamID int64) error {
 	a, err := t.dbConn.Exec(context.Background(), "DELETE FROM team_members WHERE member_id = $1 AND team_id = $2", userID, teamID)
 	if a.RowsAffected() == 0 {
 		return errorhandling.NotAMember

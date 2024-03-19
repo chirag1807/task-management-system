@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/smtp"
+	"strconv"
 
 	"github.com/chirag1807/task-management-system/api/model/dto"
 	"github.com/chirag1807/task-management-system/config"
@@ -73,7 +74,7 @@ func PrepareEmailBody(OTP int) string {
         <div style="padding: 20px;">
             <p>Hello User,</p>
             <p>Please verify your email address by entering below code.</p>
-            <p>Your verification code is: <strong>` + string(rune(OTP)) + `</strong></p>
+            <p>Your verification code is: <strong>` + strconv.Itoa(OTP) + `</strong></p>
             <p>If you did not initiate this change, please contact our support team immediately.</p>
             <p>Best regards,<br>ZURU TECH</p>
         </div>

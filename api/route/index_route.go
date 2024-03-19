@@ -38,7 +38,7 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client) *chi.Mux {
 	router.Route("/api/task", func(r chi.Router) {
 		router.Post("/create-task", taskController.CreateTask)
 		router.Get("/get-all-tasks/{Flag}", taskController.GetAllTasks)
-		router.Get("/get-tasks-of-team/{teamID}", taskController.GetTasksofTeam)
+		router.Get("/get-tasks-of-team/{TeamID}", taskController.GetTasksofTeam)
 		router.Put("/update-task", taskController.UpdateTask)
 		router.Delete("/delete-task/{TaskID}", taskController.DeleteTask)
 	})

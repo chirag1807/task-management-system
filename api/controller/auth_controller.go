@@ -34,15 +34,18 @@ func NewAuthController(authService service.AuthService) AuthController {
 
 func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
-		constant.FirstNameKey: "string|minLen:2",
-		constant.LastNameKey:  "string|minLen:2",
-		constant.BioKey:       "string|minLen:6",
-		constant.EmailKey:     `string`,
-		constant.PasswordKey:  "string|minLen:8",
-		constant.ProfileKey:   "string|in:Public,Private",
+		constant.FirstNameKey: "string|minLen:2|required",
+		constant.LastNameKey:  "string|minLen:2|required",
+		constant.BioKey:       "string|minLen:6|required",
+		constant.EmailKey:     `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
+		constant.PasswordKey:  "string|minLen:8|required",
+		constant.ProfileKey:   "string|in:Public,Private|required",
 	}
 	var userRequest request.User
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userRequest, &requestParams, nil, nil, nil, nil)
+
+	requestBodyData := validation.CreateCustomErrorMsg(w, r)
+
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userRequest, &requestParams, nil, nil, nil, nil, requestBodyData)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
@@ -50,8 +53,8 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 	}
 	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
-	if invalidParamsErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsErrMsg)
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
 	}
 
@@ -65,12 +68,6 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 	err = json.Unmarshal(body, &userRequest)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
-		return
-	}
-
-	isValidEmail := validation.EmailValidation(userRequest.Email)
-	if !isValidEmail {
-		errorhandling.SendErrorResponse(w, errorhandling.EmailvalidationError)
 		return
 	}
 
@@ -95,7 +92,26 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 }
 
 func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
+	var requestParams = map[string]string{
+		constant.EmailKey:     `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
+		constant.PasswordKey:  "string|minLen:8|required",
+	}
 	var userLoginRequest request.User
+
+	requestBodyData := validation.CreateCustomErrorMsg(w, r)
+
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userLoginRequest, &requestParams, nil, nil, nil, nil, requestBodyData)
+
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -110,24 +126,18 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isEmail := validation.EmailValidation(userLoginRequest.Email)
-	if !isEmail {
-		errorhandling.SendErrorResponse(w, errorhandling.EmailvalidationError)
-		return
-	}
-
 	var user response.User
 	var refreshToken string
 	user, refreshToken, err = a.authService.UserLogin(userLoginRequest)
 
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.LoginFailedError)
+		errorhandling.SendErrorResponse(w, err)
 		return
 	}
 
 	accessToken, err := utils.CreateJWTToken(time.Now().Add(time.Hour*5), user.ID)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(w, err) //ask sir about these like i need to send err came from utls package or custom error just like below function.
 		return
 	}
 
@@ -144,7 +154,7 @@ func (a authController) ResetToken(w http.ResponseWriter, r *http.Request) {
 
 	userId, err := a.authService.ResetToken(token)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.RefreshTokenError)
+		errorhandling.SendErrorResponse(w, err)
 		return
 	}
 

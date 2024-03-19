@@ -12,6 +12,7 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
+	"github.com/chirag1807/task-management-system/api/validation"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
@@ -59,7 +60,30 @@ func (u userController) GetMyDetails(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request) {
+	var requestParams = map[string]string{
+		constant.FirstNameKey: "string|minLen:2",
+		constant.LastNameKey:  "string|minLen:2",
+		constant.BioKey:       "string|minLen:6",
+		constant.EmailKey:     `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
+		constant.PasswordKey:  "string|minLen:8",
+		constant.ProfileKey:   "string|in:Public,Private",
+	}
 	var userToUpdate request.User
+
+	requestBodyData := validation.CreateCustomErrorMsg(w, r)
+
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userToUpdate, &requestParams, nil, nil, nil, nil, requestBodyData)
+
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -76,7 +100,6 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	if userToUpdate.Password != "" {
-		log.Println("yesyesyes")
 		err := u.userService.VerifyUserPassword(userToUpdate.Password, userId)
 		if err != nil {
 			errorhandling.SendErrorResponse(w, err)
@@ -103,7 +126,23 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 }
 
 func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
+	var requestParams = map[string]string{
+		constant.EmailKey: `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
+	}
 	var user request.User
+
+	requestBodyData := validation.CreateCustomErrorMsg(w, r)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil, requestBodyData)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -134,7 +173,7 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 		Body:    emailBody,
 	}
 
-	otpExpireTime := time.Now().Add(time.Minute * 5)
+	otpExpireTime := time.Now().UTC().Add(time.Minute * 5)
 	id, err := u.userService.SendOTPToUser(email, OTP, otpExpireTime)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
@@ -150,7 +189,24 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	var requestParams = map[string]string{
+		constant.OTPIdKey:   "number|required",
+		constant.OTPCodeKey: "int|min:1000|max:9999|required",
+	}
 	var otp request.OTP
+
+	requestBodyData := validation.CreateCustomErrorMsg(w, r)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &otp, &requestParams, nil, nil, nil, nil, requestBodyData)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -178,7 +234,26 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request) {
+	var requestParams = map[string]string{
+		constant.EmailKey:     `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
+		constant.PasswordKey:  "string|minLen:8|required",
+	}
 	var userEmailPassword request.User
+
+	requestBodyData := validation.CreateCustomErrorMsg(w, r)
+
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userEmailPassword, &requestParams, nil, nil, nil, nil, requestBodyData)
+
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {

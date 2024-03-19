@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/chirag1807/task-management-system/api/model/dto"
@@ -69,6 +68,13 @@ func (u userRepository) GetMyDetails(userId int64) (response.User, error) {
 }
 
 func (u userRepository) UpdateUserProfile(userId int64, userToUpdate request.User) error {
+	if userToUpdate.Profile == "Private" {
+		var userCount int
+		u.dbConn.QueryRow(context.Background(), `SELECT COUNT(*) FROM team_members where member_id = $1`, userId).Scan(&userCount)
+		if userCount > 0 {
+			return errorhandling.LeftAllTeamsToMakeProfilePrivate
+		}
+	}
 	query, args, err := UpdateQuery("users", userToUpdate, userId)
 	if err != nil {
 		return err
@@ -120,15 +126,15 @@ func (u userRepository) VerifyOTP(otpFromUser request.OTP) error {
 		if err := rows.Scan(&dbOTP.ID, &dbOTP.OTP, &dbOTP.OTPExpiryTime); err != nil {
 			return err
 		}
-		fmt.Println(dbOTP.OTPExpiryTime.Before(time.Now()))
-		fmt.Println(dbOTP.OTPExpiryTime.After(time.Now()))
-		fmt.Println(dbOTP.OTPExpiryTime)
-		fmt.Println(time.Now())
-		if dbOTP.OTPExpiryTime.After(time.Now()) {
+		if time.Until(dbOTP.OTPExpiryTime) < 0 {
 			return errorhandling.OTPVerificationTimeExpired
 		} else if dbOTP.OTP != otpFromUser.OTP {
 			return errorhandling.OTPNotMatched
 		} else {
+			_, err = u.dbConn.Exec(context.Background(), `DELETE FROM otps WHERE id = $1`, otpFromUser.ID)
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 	} else {

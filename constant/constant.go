@@ -42,5 +42,19 @@ const (
 	PasswordKey  = "password"
 	ProfileKey   = "profile"
 
-	//
+	// for otp model
+	OTPIdKey   = "id"
+	OTPCodeKey = "otp"
+
+	// for team model
+	TeamNameKey      = "teamDetails.name"
+	TeamMembersKey = "teamMembers"
+	TeamMembersIdKey = "teamMembers.memberID"
+
+	// for team members model
+	TeamIdKey       = "teamID"
+	TeamMemberIdKey = "memberID"
+
+	// query params
+	FlagIdKey = "Flag"
 )
