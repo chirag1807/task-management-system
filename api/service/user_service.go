@@ -10,7 +10,7 @@ import (
 )
 
 type UserService interface {
-	GetAllPublicProfileUsers() ([]response.User, error)
+	GetAllPublicProfileUsers(queryParams request.UserQueryParams) ([]response.User, error)
 	GetMyDetails(userId int64) (response.User, error)
 	UpdateUserProfile(userId int64, userToUpdate request.User) error
 	SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTime time.Time) (int64, error)
@@ -29,8 +29,8 @@ func NewUserService(userRepository repository.UserRepository) UserService {
 	}
 }
 
-func (u userService) GetAllPublicProfileUsers() ([]response.User, error) {
-	return u.userRepository.GetAllPublicProfileUsers()
+func (u userService) GetAllPublicProfileUsers(queryParams request.UserQueryParams) ([]response.User, error) {
+	return u.userRepository.GetAllPublicProfileUsers(queryParams)
 }
 
 func (u userService) GetMyDetails(userId int64) (response.User, error) {

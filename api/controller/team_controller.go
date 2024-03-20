@@ -40,6 +40,7 @@ func NewTeamController(teamService service.TeamService) TeamController {
 func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamNameKey:      "string|minLen:3|maxLen:15|required",
+		constant.TeamProfileKey:   "string|in:Public,Private",
 		constant.TeamMembersKey:   "required",
 		constant.TeamMembersIdKey: "slice|number|required",
 	}
@@ -178,29 +179,36 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 }
 
 func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
-	// var queryParams = map[string]string{
-	// 	constant.FlagIdKey: "int|in:0,1",
-	// }
+	var queryParams = map[string]string{
+		constant.LimitKey:          "number|default:10",
+		constant.OffsetKey:         "number|default:0",
+		constant.SearchKey:         "string",
+		constant.SortByCreateAtKey: "bool",
+	}
+	var queryParamFilters = map[string]string{
+		constant.LimitKey:          "int",
+		constant.OffsetKey:         "int",
+		constant.SortByCreateAtKey: "bool",
+	}
 
-	// requestBodyData := validation.CreateCustomErrorMsg(w, r)
+	var teamQueryParams request.TeamQueryParams
 
-	// err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, nil, nil, nil, &queryParams, nil, nil, requestBodyData)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
-	// if err != nil {
-	// 	errorhandling.SendErrorResponse(w, err)
-	// 	return
-	// }
-	// log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
-
-	// if invalidParamsMultiLineErrMsg != nil {
-	// 	errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
-	// 	return
-	// }
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	flag, err := strconv.Atoi(chi.URLParam(r, "Flag"))
 	if err != nil {
-		if strings.Contains(err.Error(), "strconv.Atoi: parsing"){
+		if strings.Contains(err.Error(), "strconv.Atoi: parsing") {
 			errorhandling.SendErrorResponse(w, errorhandling.ProvideValidFlag)
 			return
 		}
@@ -208,40 +216,69 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if flag == 0 || flag == 1 {
-		teams, err := t.teamService.GetAllTeams(userId, flag)
+		teams, err := t.teamService.GetAllTeams(userId, flag, teamQueryParams)
 		if err != nil {
 			errorhandling.SendErrorResponse(w, err)
 			return
 		}
-		utils.SendSuccessResponse(w, http.StatusOK, teams)
+		response := response.Teams{
+			Teams: teams,
+		}
+		utils.SendSuccessResponse(w, http.StatusOK, response)
 	} else {
 		errorhandling.SendErrorResponse(w, errorhandling.ProvideValidFlag)
 	}
 }
 
 func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
+	var queryParams = map[string]string{
+		constant.LimitKey:  "number|default:10",
+		constant.OffsetKey: "number|default:0",
+	}
+	var queryParamFilters = map[string]string{
+		constant.LimitKey:  "int",
+		constant.OffsetKey: "int",
+	}
+
+	var teamQueryParams request.TeamQueryParams
+
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
+
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
 	if err != nil {
-		if strings.Contains(err.Error(), "strconv.ParseInt: parsing"){
+		if strings.Contains(err.Error(), "strconv.ParseInt: parsing") {
 			errorhandling.SendErrorResponse(w, errorhandling.ProvideValidParams)
 			return
 		}
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	teams, err := t.teamService.GetTeamMembers(teamID)
+	teamMembers, err := t.teamService.GetTeamMembers(teamID, teamQueryParams)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	utils.SendSuccessResponse(w, http.StatusOK, teams)
+	response := response.TeamMemberDetails{
+		TeamMembers: teamMembers,
+	}
+	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
 func (t teamController) LeftTeam(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
 	if err != nil {
-		if strings.Contains(err.Error(), "strconv.ParseInt: parsing"){
+		if strings.Contains(err.Error(), "strconv.ParseInt: parsing") {
 			errorhandling.SendErrorResponse(w, errorhandling.ProvideValidParams)
 			return
 		}

@@ -53,6 +53,7 @@ var (
 	OnlyPublicTeamAssignne           = CreateCustomError("Tasks can be Assgined to Only Public Profile Teams.", http.StatusBadRequest)
 	NotAMember                       = CreateCustomError("You can not Left the Meeting Because You are Not a Member of This Team.", http.StatusUnauthorized)
 	LeftAllTeamsToMakeProfilePrivate = CreateCustomError("You must Left All Teams that You are Part of to Make Your Profile Private.", http.StatusUnauthorized)
+	NoTaskFound                      = CreateCustomError("No Task Found For This Request.", http.StatusNotFound)
 )
 
 // SendErrorResponse send defined errors in response with error message and status code.

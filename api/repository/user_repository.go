@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/chirag1807/task-management-system/api/model/dto"
@@ -14,7 +15,7 @@ import (
 )
 
 type UserRepository interface {
-	GetAllPublicProfileUsers() ([]response.User, error)
+	GetAllPublicProfileUsers(queryParams request.UserQueryParams) ([]response.User, error)
 	GetMyDetails(userId int64) (response.User, error)
 	UpdateUserProfile(userId int64, userToUpdate request.User) error
 	SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTime time.Time) (int64, error)
@@ -35,8 +36,10 @@ func NewUserRepo(dbConn *pgx.Conn, redisClient *redis.Client) UserRepository {
 	}
 }
 
-func (u userRepository) GetAllPublicProfileUsers() ([]response.User, error) {
-	publicUsers, err := u.dbConn.Query(context.Background(), `SELECT * FROM users WHERE profile = $1`, "Public")
+func (u userRepository) GetAllPublicProfileUsers(queryParams request.UserQueryParams) ([]response.User, error) {
+	query := `SELECT * FROM users WHERE profile = $1`
+	query = CreateQueryForParamsOfGetUser(query, queryParams)
+	publicUsers, err := u.dbConn.Query(context.Background(), query, "Public")
 	publicUsersSlice := make([]response.User, 0)
 	if err != nil {
 		return publicUsersSlice, err
@@ -51,6 +54,16 @@ func (u userRepository) GetAllPublicProfileUsers() ([]response.User, error) {
 		publicUsersSlice = append(publicUsersSlice, publicUser)
 	}
 	return publicUsersSlice, nil
+}
+
+func CreateQueryForParamsOfGetUser(query string, queryParams request.UserQueryParams) string {
+	if queryParams.Search != "" {
+		query += fmt.Sprintf(" AND (first_name ILIKE '%%%s%%' OR last_name ILIKE '%%%s%%' OR bio ILIKE '%%%s%%')",
+		 queryParams.Search, queryParams.Search, queryParams.Search)
+	}
+	query += fmt.Sprintf(" LIMIT %d", queryParams.Limit)
+	query += fmt.Sprintf(" OFFSET %d", queryParams.Offset)
+	return query
 }
 
 func (u userRepository) GetMyDetails(userId int64) (response.User, error) {

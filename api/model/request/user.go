@@ -9,3 +9,9 @@ type User struct {
 	NewPassword string `json:"newPassword" db:"password"`
 	Profile     string `json:"profile" db:"profile"`
 }
+
+type UserQueryParams struct {
+	Limit        int    `json:"limit"`
+	Offset       int    `json:"offset"`
+	Search       string `json:"search"`
+}

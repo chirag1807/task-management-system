@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
@@ -12,11 +13,10 @@ import (
 
 type TaskRepository interface {
 	CreateTask(taskToCreate request.Task) (int64, error)
-	GetAllTasks(userId int64, flag int) ([]response.Task, error)
+	GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error)
 	//flag is used for get my created tasks and get tasks assigned to me.
-	GetTasksofTeam(teamId int64) ([]response.Task, error)
+	GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error)
 	UpdateTask(taskToUpdate request.Task) error
-	DeleteTask(taskId int64) error
 }
 
 type taskRepository struct {
@@ -58,17 +58,21 @@ func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 	return taskID, nil
 }
 
-func (t taskRepository) GetAllTasks(userId int64, flag int) ([]response.Task, error) {
+func (t taskRepository) GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error) {
 	var tasks pgx.Rows
 	var err error
 	tasksSlice := make([]response.Task, 0)
 
+	var query string
 	if flag == 0 {
-		tasks, err = t.dbConn.Query(context.Background(), `SELECT * FROM tasks WHERE created_by = $1`, userId)
+		query = `SELECT * FROM tasks WHERE created_by = $1 AND true`
+		query = CreateQueryForParamsOfGetTask(query, queryParams)
+		tasks, err = t.dbConn.Query(context.Background(), query, userId)
 	}
 	if flag == 1 {
-		tasks, err = t.dbConn.Query(context.Background(), `SELECT * FROM tasks WHERE assignee_individual = $1 OR assignee_team
-		IN (SELECT team_id from team_members where member_id = $2)`, userId, userId)
+		query = `SELECT * FROM tasks WHERE (assignee_individual = $1 OR assignee_team IN (SELECT team_id from team_members where member_id = $2))`
+		query = CreateQueryForParamsOfGetTask(query, queryParams)
+		tasks, err = t.dbConn.Query(context.Background(), query, userId, userId)
 	}
 
 	if err != nil {
@@ -88,10 +92,12 @@ func (t taskRepository) GetAllTasks(userId int64, flag int) ([]response.Task, er
 	return tasksSlice, nil
 }
 
-func (t taskRepository) GetTasksofTeam(teamId int64) ([]response.Task, error) {
+func (t taskRepository) GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error) {
 	tasksSlice := make([]response.Task, 0)
 
-	tasks, err := t.dbConn.Query(context.Background(), `SELECT * FROM tasks WHERE assignee_team = $1`, teamId)
+	query := `SELECT * FROM tasks WHERE assignee_team = $1 AND true`
+	query = CreateQueryForParamsOfGetTask(query, queryParams)
+	tasks, err := t.dbConn.Query(context.Background(), query, teamId)
 	if err != nil {
 		return tasksSlice, err
 	}
@@ -107,12 +113,60 @@ func (t taskRepository) GetTasksofTeam(teamId int64) ([]response.Task, error) {
 	}
 
 	return tasksSlice, nil
+}
+
+func CreateQueryForParamsOfGetTask(query string, queryParams request.TaskQueryParams) string {
+	if queryParams.Search != "" {
+		query += fmt.Sprintf(" AND (title ILIKE '%%%s%%' OR description ILIKE '%%%s%%')", queryParams.Search, queryParams.Search)
+	}
+	if queryParams.Status != "" {
+		query += fmt.Sprintf(" AND status = '%s'", queryParams.Status)
+	}
+	if queryParams.SortByFilter {
+		query += " ORDER BY CASE priority WHEN 'Very High' THEN 1 WHEN 'High' THEN 2 WHEN 'Medium' THEN 3 ELSE 4 END"
+	}
+	query += fmt.Sprintf(" LIMIT %d", queryParams.Limit)
+	query += fmt.Sprintf(" OFFSET %d", queryParams.Offset)
+	return query
 }
 
 func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
-	return nil
-}
+	var dbTask response.Task
+	task := t.dbConn.QueryRow(context.Background(), `SELECT * FROM tasks WHERE id = $1`, taskToUpdate.ID)
+	err := task.Scan(&dbTask.ID, &dbTask.Title, &dbTask.Description, &dbTask.Deadline, &dbTask.AssigneeIndividual, &dbTask.AssigneeTeam, &dbTask.Status, 
+		&dbTask.Priority, &dbTask.CreatedBy, &dbTask.CreatedAt, &dbTask.UpdatedBy, &dbTask.UpdatedAt)
 
-func (t taskRepository) DeleteTask(taskId int64) error {
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return errorhandling.NoTaskFound
+		}
+		return err
+	}
+
+	if dbTask.AssigneeIndividual != nil {
+		if *dbTask.AssigneeIndividual != *taskToUpdate.UpdatedBy {
+			return errorhandling.NotAllowed
+		}
+	} else {
+		var userCount int
+		t.dbConn.QueryRow(context.Background(), `SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND member_id = $2`, dbTask.AssigneeTeam, taskToUpdate.UpdatedBy).Scan(&userCount)
+		if userCount == 0 {
+			return errorhandling.NotAllowed
+		}
+	}
+
+	if dbTask.CreatedBy != *taskToUpdate.UpdatedBy && (taskToUpdate.Priority != "" || taskToUpdate.Title != "" || taskToUpdate.Description != "" || 
+		taskToUpdate.AssigneeIndividual != nil || taskToUpdate.AssigneeTeam != nil) {
+		return errorhandling.NotAllowed
+	}
+
+	query, args, err := UpdateQuery("tasks", taskToUpdate, taskToUpdate.ID)
+	if err != nil {
+		return err
+	}
+	_, err = t.dbConn.Exec(context.Background(), query, args...)
+	if err != nil {
+		return err
+	}
 	return nil
 }

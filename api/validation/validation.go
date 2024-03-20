@@ -54,6 +54,7 @@ func ValidateParameters(r *http.Request, requestBody interface{}, requestParamet
 		"int":      "{field} must be integer only.",
 		"number":   "{field} must be number only.",
 		"slice":    "{field} must be an array only.",
+		"bool":     "{field} must be boolean only.",
 		"required": "{field} is required to not be empty.",
 		"minLen":   "{field} violates minimum length constraint.",
 		"maxLen":   "{field} violates maximum length constraint.",

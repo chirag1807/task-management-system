@@ -38,7 +38,31 @@ func NewUserController(userService service.UserService) UserController {
 }
 
 func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.Request) {
-	publicProfileUsers, err := u.userService.GetAllPublicProfileUsers()
+	var queryParams = map[string]string{
+		constant.LimitKey:          "number|default:10",
+		constant.OffsetKey:         "number|default:0",
+		constant.SearchKey:         "string",
+	}
+	var queryParamFilters = map[string]string{
+		constant.LimitKey:          "int",
+		constant.OffsetKey:         "int",
+	}
+
+	var userQueryParams request.UserQueryParams
+
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
+
+	publicProfileUsers, err := u.userService.GetAllPublicProfileUsers(userQueryParams)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return

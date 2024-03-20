@@ -8,10 +8,9 @@ import (
 
 type TaskService interface {
 	CreateTask(taskToCreate request.Task) (int64, error)
-	GetAllTasks(userId int64, flag int) ([]response.Task, error)
-	GetTasksofTeam(teamId int64) ([]response.Task, error)
+	GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error)
+	GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error)
 	UpdateTask(taskToUpdate request.Task) error
-	DeleteTask(taskId int64) error
 }
 
 type taskService struct {
@@ -28,18 +27,14 @@ func (t taskService) CreateTask(taskToCreate request.Task) (int64, error) {
 	return t.taskRepository.CreateTask(taskToCreate)
 }
 
-func (t taskService) GetAllTasks(userId int64, flag int) ([]response.Task, error) {
-	return t.taskRepository.GetAllTasks(userId, flag)
+func (t taskService) GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error) {
+	return t.taskRepository.GetAllTasks(userId, flag, queryParams)
 }
 
-func (t taskService) GetTasksofTeam(teamId int64) ([]response.Task, error) {
-	return t.taskRepository.GetTasksofTeam(teamId)
+func (t taskService) GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error) {
+	return t.taskRepository.GetTasksofTeam(teamId, queryParams)
 }
 
 func (t taskService) UpdateTask(taskToUpdate request.Task) error {
 	return t.taskRepository.UpdateTask(taskToUpdate)
-}
-
-func (t taskService) DeleteTask(taskId int64) error {
-	return t.taskRepository.DeleteTask(taskId)
 }

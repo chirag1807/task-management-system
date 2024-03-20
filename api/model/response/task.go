@@ -16,3 +16,7 @@ type Task struct {
 	UpdatedBy          *int64     `json:"updatedBy,omitempty"`
 	UpdatedAt          *time.Time `json:"updatedAt,omitempty"`
 }
+
+type Tasks struct {
+	Tasks []Task `json:"tasks"`
+}

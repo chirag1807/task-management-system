@@ -24,7 +24,6 @@ type TaskController interface {
 	GetAllTasks(w http.ResponseWriter, r *http.Request)
 	GetTasksofTeam(w http.ResponseWriter, r *http.Request)
 	UpdateTask(w http.ResponseWriter, r *http.Request)
-	DeleteTask(w http.ResponseWriter, r *http.Request)
 }
 
 type taskController struct {
@@ -93,17 +92,21 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
-		constant.LimitKey:  "number|default:10",
-		constant.OffsetKey: "number|default:0",
+		constant.LimitKey:        "number|default:10",
+		constant.OffsetKey:       "number|default:0",
+		constant.SearchKey:       "string",
+		constant.StatusFilterKey: "string|in:TO-DO,In-Progress,Completed,Closed",
+		constant.SortByFilterKey: "bool",
 	}
 	var queryParamFilters = map[string]string{
-		constant.LimitKey:  "int",
-		constant.OffsetKey: "int",
+		constant.LimitKey:        "int",
+		constant.OffsetKey:       "int",
+		constant.SortByFilterKey: "bool",
 	}
 
-	var taskPagination request.TaskPagination
+	var taskQueryParams request.TaskQueryParams
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &taskPagination, nil, nil, &queryParams, &queryParamFilters, nil)
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
@@ -125,26 +128,50 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	// limit := r.URL.Query().Get("limit")
-	// offset := r.URL.Query().Get("offset")
-	// searchField := r.URL.Query().Get("search")
-	// status := r.URL.Query().Get("status")
-	log.Println(taskPagination.Limit)
-	
 
 	if flag == 0 || flag == 1 {
-		tasks, err := t.taskService.GetAllTasks(userId, flag)
+		tasks, err := t.taskService.GetAllTasks(userId, flag, taskQueryParams)
 		if err != nil {
 			errorhandling.SendErrorResponse(w, err)
 			return
 		}
-		utils.SendSuccessResponse(w, http.StatusOK, tasks)
+		response := response.Tasks{
+			Tasks: tasks,
+		}
+		utils.SendSuccessResponse(w, http.StatusOK, response)
 	} else {
 		errorhandling.SendErrorResponse(w, errorhandling.ProvideValidFlag)
 	}
 }
 
 func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
+	var queryParams = map[string]string{
+		constant.LimitKey:        "number|default:10",
+		constant.OffsetKey:       "number|default:0",
+		constant.SearchKey:       "string",
+		constant.StatusFilterKey: "string|in:TO-DO,In-Progress,Completed,Closed",
+		constant.SortByFilterKey: "bool",
+	}
+	var queryParamFilters = map[string]string{
+		constant.LimitKey:        "int",
+		constant.OffsetKey:       "int",
+		constant.SortByFilterKey: "bool",
+	}
+
+	var taskQueryParams request.TaskQueryParams
+
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
+
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
 	if err != nil {
 		if strings.Contains(err.Error(), "strconv.Atoi: parsing") {
@@ -155,18 +182,68 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tasks, err := t.taskService.GetTasksofTeam(teamID)
+	tasks, err := t.taskService.GetTasksofTeam(teamID, taskQueryParams)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	utils.SendSuccessResponse(w, http.StatusOK, tasks)
+	response := response.Tasks{
+		Tasks: tasks,
+	}
+	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
 func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
+	var requestParams = map[string]string{
+		constant.TaskIdKey:             "number|required",
+		constant.TitleKey:              "string|minLen:4|maxLen:24",
+		constant.DescriptionKey:        "string|minLen:12|maxLen:108",
+		constant.AssigneeIndividualKey: `number`,
+		constant.AssigneeTeamKey:       "number",
+		constant.StatusKey:             "string|in:TO-DO,In-Progress,Completed,Closed",
+		constant.PriorityKey:           "string|in:Low,Medium,High,Very High",
+	}
+	var taskToUpdate request.Task
 
-}
+	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &taskToUpdate, &requestParams, nil, nil, nil, nil)
 
-func (t taskController) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
+
+	if invalidParamsMultiLineErrMsg != nil {
+		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		return
+	}
+	defer r.Body.Close()
+
+	err = json.Unmarshal(body, &taskToUpdate)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		return
+	}
+
+	userId := r.Context().Value(constant.UserIdKey).(int64)
+	taskToUpdate.UpdatedBy = &userId
+	taskToUpdate.UpdatedAt = time.Now().UTC()
+
+	err = t.taskService.UpdateTask(taskToUpdate)
+	if err != nil {
+		errorhandling.SendErrorResponse(w, err)
+		return
+	}
+
+	response := response.SuccessResponse{
+		Message: constant.TASK_UPDATED,
+	}
+	utils.SendSuccessResponse(w, http.StatusOK, response)
 
 }

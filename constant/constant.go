@@ -23,6 +23,7 @@ const (
 	MEMBERS_REMOVED_FROM_TEAM = "Members Removed from Team."
 	LEFT_TEAM                 = "Team Left Successfully."
 	TASK_CREATED              = "Task Created Successfully."
+	TASK_UPDATED              = "Task Updated Successfully."
 )
 
 type contextKey string
@@ -34,7 +35,7 @@ var (
 
 // below I have declared keys for body, quer params and url params validations.
 const (
-	// for user model
+	// For User Model
 	IdKey        = "id"
 	FirstNameKey = "firstName"
 	LastNameKey  = "lastName"
@@ -43,20 +44,22 @@ const (
 	PasswordKey  = "password"
 	ProfileKey   = "profile"
 
-	// for otp model
+	// For OTP Model
 	OTPIdKey   = "id"
 	OTPCodeKey = "otp"
 
-	// for team model
+	// For Team Model
 	TeamNameKey      = "teamDetails.name"
+	TeamProfileKey   = "teamDetails.teamProfile"
 	TeamMembersKey   = "teamMembers"
 	TeamMembersIdKey = "teamMembers.memberID"
 
-	// for team members model
+	// For Team Members Model
 	TeamIdKey       = "teamID"
 	TeamMemberIdKey = "memberID"
 
-	//for task model
+	//For Task Model
+	TaskIdKey             = "id"
 	TitleKey              = "title"
 	DescriptionKey        = "description"
 	DeadlineKey           = "deadline"
@@ -65,7 +68,11 @@ const (
 	StatusKey             = "status"
 	PriorityKey           = "priority"
 
-	// query params
-	LimitKey  = "limit"
-	OffsetKey = "offset"
+	// Query Params
+	LimitKey          = "limit"
+	OffsetKey         = "offset"
+	SearchKey         = "search"
+	StatusFilterKey   = "status"
+	SortByFilterKey   = "sortByFilter"
+	SortByCreateAtKey = "sortByCreatedAt"
 )
