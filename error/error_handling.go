@@ -26,13 +26,12 @@ func CreateCustomError(errorMessage string, statusCode int) error {
 }
 
 var (
-	ReadBodyError           = CreateCustomError("Could not Read Request Body, Please Provide Valid Body.", http.StatusBadRequest)
-	ReadDataError           = CreateCustomError("Could not Decode the Data, Please Provide Valid Data.", http.StatusBadRequest)
-	EmailvalidationError    = CreateCustomError("Email Validation Failed, Please Provide Valid Email.", http.StatusBadRequest)
-	DuplicateEmailFound     = CreateCustomError("Duplicate Email Found.", http.StatusConflict)
-	MemberExist             = CreateCustomError("Member Already Added in Team.", http.StatusConflict)
-	RegistrationFailedError = CreateCustomError("User Registration Failed.", http.StatusInternalServerError)
-	// LoginFailedError                 = CreateCustomError("User Login Failed.", http.StatusUnauthorized)
+	ReadBodyError                    = CreateCustomError("Could not Read Request Body, Please Provide Valid Body.", http.StatusBadRequest)
+	ReadDataError                    = CreateCustomError("Could not Decode the Data, Please Provide Valid Data.", http.StatusBadRequest)
+	EmailvalidationError             = CreateCustomError("Email Validation Failed, Please Provide Valid Email.", http.StatusBadRequest)
+	DuplicateEmailFound              = CreateCustomError("Duplicate Email Found.", http.StatusConflict)
+	MemberExist                      = CreateCustomError("Member Already Added in Team.", http.StatusConflict)
+	RegistrationFailedError          = CreateCustomError("User Registration Failed.", http.StatusInternalServerError)
 	AccessTokenExpired               = CreateCustomError("Access Token is Expired, Please Regenrate It.", http.StatusUnauthorized)
 	RefreshTokenExpired              = CreateCustomError("Access Token is Expired, Please Do Login Again.", http.StatusUnauthorized)
 	RefreshTokenError                = CreateCustomError("Access Token Can't be Regenerated, Please Do Login Again.", http.StatusUnauthorized)
@@ -54,6 +53,7 @@ var (
 	NotAMember                       = CreateCustomError("You can not Left the Meeting Because You are Not a Member of This Team.", http.StatusUnauthorized)
 	LeftAllTeamsToMakeProfilePrivate = CreateCustomError("You must Left All Teams that You are Part of to Make Your Profile Private.", http.StatusUnauthorized)
 	NoTaskFound                      = CreateCustomError("No Task Found For This Request.", http.StatusNotFound)
+	TaskClosed                       = CreateCustomError("Task Can't be Updated because It is Closed.", http.StatusUnprocessableEntity)
 )
 
 // SendErrorResponse send defined errors in response with error message and status code.

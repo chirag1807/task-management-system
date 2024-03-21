@@ -5,13 +5,33 @@ import (
 	"github.com/chirag1807/task-management-system/api/middleware"
 	"github.com/chirag1807/task-management-system/api/repository"
 	"github.com/chirag1807/task-management-system/api/service"
+	"github.com/chirag1807/task-management-system/api/socket"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/go-redis/redis/v8"
+	socketio "github.com/googollee/go-socket.io"
 	"github.com/jackc/pgx/v5"
 )
 
-func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client) *chi.Mux {
+func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, server *socketio.Server) *chi.Mux {
 	router := chi.NewRouter()
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+	})
+	socket.SocketEvents(server)
+	router.Handle("/socket.io/", c.Handler(server))
+
+	// router.Use(cors.Handler(cors.Options{
+	// 	AllowedOrigins:   []string{"https://*", "http://*"},
+	// 	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	// 	AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+	// 	ExposedHeaders:   []string{"Link"},
+	// 	AllowCredentials: false,
+	// 	MaxAge:           300, // Maximum value not ignored by any of major browsers
+	// }))
+	// router.Handle("/socket.io/", server)
 
 	authRepository := repository.NewAuthRepo(dbConn, redisClient)
 	authService := service.NewAuthService(authRepository)
@@ -37,10 +57,13 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client) *chi.Mux {
 
 	router.Route("/api/task", func(r chi.Router) {
 		r.Use(middleware.VerifyToken(0))
-		r.Post("/create-task", taskController.CreateTask)
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.SetSocketToReqContext(server))
+			r.Post("/create-task", taskController.CreateTask)
+			r.Put("/update-task", taskController.UpdateTask)
+		})
 		r.Get("/get-all-tasks/{Flag}", taskController.GetAllTasks)
 		r.Get("/get-tasks-of-team/{TeamID}", taskController.GetTasksofTeam)
-		r.Put("/update-task", taskController.UpdateTask)
 	})
 
 	router.Route("/api/team", func(r chi.Router) {

@@ -12,11 +12,13 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
+	"github.com/chirag1807/task-management-system/api/socket"
 	"github.com/chirag1807/task-management-system/api/validation"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
 	"github.com/go-chi/chi/v5"
+	socketio "github.com/googollee/go-socket.io"
 )
 
 type TaskController interface {
@@ -239,6 +241,15 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
+	}
+
+	socketServer := r.Context().Value(constant.SocketServerKey).(*socketio.Server)
+
+	if taskToUpdate.AssigneeIndividual != nil {
+		socket.EmitSocketEvents(socketServer, strconv.FormatInt(*taskToUpdate.AssigneeIndividual, 10), "", taskToUpdate, 0)
+	}
+	if taskToUpdate.AssigneeTeam != nil {
+		socket.EmitSocketEvents(socketServer, "", strconv.FormatInt(*taskToUpdate.AssigneeTeam, 10), taskToUpdate, 1)
 	}
 
 	response := response.SuccessResponse{

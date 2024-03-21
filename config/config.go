@@ -22,24 +22,20 @@ func LoadConfig(envFilePath string) {
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatal(err)
-		//handle error here
 	}
 
 	if err := viper.Unmarshal(&Config); err != nil {
 		log.Fatal(err)
-		//handle error here
 	}
 
 	jwtSecretKeyFileContent, err := os.ReadFile("../.config/secret.json")
 
 	if err != nil {
 		log.Fatal(err)
-		//handle error here
 	}
 
 	if err := json.Unmarshal(jwtSecretKeyFileContent, &JWtSecretKey); err != nil {
 		log.Fatal(err)
-		//handle error here
 	}
 
 }

@@ -29,8 +29,9 @@ const (
 type contextKey string
 
 var (
-	TokenKey  = contextKey("token")
-	UserIdKey = contextKey("userId")
+	TokenKey        = contextKey("token")
+	UserIdKey       = contextKey("userId")
+	SocketServerKey = contextKey("socketServer")
 )
 
 // below I have declared keys for body, quer params and url params validations.

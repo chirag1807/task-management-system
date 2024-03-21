@@ -143,6 +143,10 @@ func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
 		return err
 	}
 
+	if dbTask.Status == "Closed" {
+		return errorhandling.TaskClosed
+	}
+
 	if dbTask.AssigneeIndividual != nil {
 		if *dbTask.AssigneeIndividual != *taskToUpdate.UpdatedBy {
 			return errorhandling.NotAllowed
