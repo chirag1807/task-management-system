@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -64,6 +65,14 @@ func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers reques
 
 	if err := tx.Commit(ctx); err != nil {
 		tx.Rollback(ctx)
+		return err
+	}
+
+	teamToCreate.ID = teamId
+	teamToCreateJSON, _ := json.Marshal(teamToCreate)
+
+	err = t.redisClient.Set(context.Background(), "teams:"+strconv.FormatInt(teamId, 10), teamToCreateJSON, 0).Err()
+	if err != nil {
 		return err
 	}
 
@@ -137,6 +146,29 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 		return err
 	}
 
+	for _, v := range teamMembersToAdd.MemberID {
+		err = t.redisClient.SAdd(ctx, "teams:"+strconv.FormatInt(teamMembersToAdd.TeamID, 10)+":members", v).Err()
+		if err != nil {
+			return err
+		}
+
+		// Retrieve tasks assigned to team
+		taskIDs, err := t.redisClient.SMembers(ctx, "tasks:assigned_to:"+strconv.FormatInt(teamMembersToAdd.TeamID, 10)).Result()
+		if err != nil {
+			return err
+		}
+
+		log.Println(taskIDs)
+
+		// Assign tasks to the newly added member
+		for _, taskID := range taskIDs {
+			err = t.redisClient.SAdd(ctx, "tasks:assigned_to:"+strconv.FormatInt(v, 10), taskID).Err()
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -160,6 +192,27 @@ func (t teamRepository) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersTo
 	_, err := t.dbConn.Exec(context.Background(), query, args...)
 	if err != nil {
 		return err
+	}
+
+	for _, v := range teamMembersToRemove.MemberID {
+		err = t.redisClient.SRem(context.Background(), "teams:"+strconv.FormatInt(teamMembersToRemove.TeamID, 10)+":members", v).Err()
+		if err != nil {
+			return err
+		}
+
+		// Retrieve tasks assigned to the removed member
+		taskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:assigned_to:"+strconv.FormatInt(v, 10)).Result()
+		if err != nil {
+			return err
+		}
+
+		// Remove tasks assigned to removed member
+		for _, taskID := range taskIDs {
+			err = t.redisClient.SRem(context.Background(), "tasks:assigned_to:"+strconv.FormatInt(v, 10), taskID).Err()
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

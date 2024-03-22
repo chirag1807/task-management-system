@@ -41,3 +41,22 @@ func UpdateQuery(tableName string, model interface{}, id int64) (string, []inter
 
 	return query, args, nil
 }
+
+func UpdateQueryForRedis(dbModel interface{}, requestModel interface{}) {
+	dbValue := reflect.ValueOf(dbModel)
+	requestValue := reflect.ValueOf(requestModel)
+
+	for i := 0; i < requestValue.NumField(); i++ {
+		field := requestValue.Field(i)
+		if  field.Interface() == reflect.Zero(field.Type()).Interface() {
+			dbField := dbValue.FieldByName(requestValue.Type().Field(i).Name)
+			fmt.Println(dbField)
+			if dbField.IsValid() && dbField.CanSet() {
+				dbField.Set(field.Elem())
+			}
+		}
+	}
+
+	fmt.Println(dbValue)
+	fmt.Println(dbModel)
+}

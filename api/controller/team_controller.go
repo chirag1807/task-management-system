@@ -42,7 +42,7 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 		constant.TeamNameKey:      "string|minLen:3|maxLen:15|required",
 		constant.TeamProfileKey:   "string|in:Public,Private",
 		constant.TeamMembersKey:   "required",
-		constant.TeamMembersIdKey: "slice|number|required",
+		constant.TeamMembersIdKey: "slice|required",
 	}
 	var team request.CreateTeam
 
@@ -74,6 +74,10 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	team.TeamDetails.CreatedBy = userId
+	if team.TeamDetails.TeamProfile == nil {
+		defaultTeamProfile := "Public"
+		team.TeamDetails.TeamProfile = &defaultTeamProfile
+	}
 	team.TeamMembers.MemberID = append(team.TeamMembers.MemberID, userId)
 	log.Println(team.TeamDetails, team.TeamMembers)
 
@@ -91,7 +95,7 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamIdKey:       "number|required",
-		constant.TeamMemberIdKey: "slice|number|required",
+		constant.TeamMemberIdKey: "slice|required",
 	}
 	var teamMembersToAdd request.TeamMembers
 
@@ -136,7 +140,7 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamIdKey:       "number|required",
-		constant.TeamMemberIdKey: "slice|number|required",
+		constant.TeamMemberIdKey: "slice|required",
 	}
 	var teamMembersToRemove request.TeamMembers
 

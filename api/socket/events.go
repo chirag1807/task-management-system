@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"fmt"
 	"log"
 
 	socketio "github.com/googollee/go-socket.io"
@@ -13,6 +14,7 @@ func SocketEvents(server *socketio.Server) {
 	})
 
 	server.OnEvent("/", "join-room", func(s socketio.Conn, roomName string) {
+		fmt.Println(roomName)
 		server.JoinRoom("/", roomName, s)
 	})
 

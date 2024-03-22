@@ -14,8 +14,6 @@ import (
 func SocketConnection() *socketio.Server {
 
 	socketServer := socketio.NewServer(&engineio.Options{
-		PingTimeout:  60 * time.Second,
-		PingInterval: 30 * time.Second,
 		Transports: []transport.Transport{
 			&polling.Transport{
 				Client: &http.Client{
