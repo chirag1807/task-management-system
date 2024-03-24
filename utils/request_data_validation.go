@@ -1,9 +1,7 @@
-package validation
+package utils
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/chirag1807/task-management-system/api/model/response"
 	errorhandling "github.com/chirag1807/task-management-system/error"
@@ -11,7 +9,7 @@ import (
 )
 
 func ValidateParameters(r *http.Request, requestBody interface{}, requestParametersMap *map[string]string, requestParametersFiltersMap *map[string]string,
-	queryParametersMap *map[string]string, queryParametersFiltersMap *map[string]string, urlParamsError *[]response.InvalidParameters) (error, error, error) {
+	queryParametersMap *map[string]string, queryParametersFiltersMap *map[string]string, urlParamsError *[]response.InvalidParameters) (error, error) {
 
 	var invalidParamErr []response.InvalidParameters
 	var invalidParamKeysArr []string
@@ -45,7 +43,7 @@ func ValidateParameters(r *http.Request, requestBody interface{}, requestParamet
 
 	requestParameterData, err := validate.FromRequest(r)
 	if err != nil {
-		return err, nil, nil
+		return err, nil
 	}
 
 	requestBodyData := requestParameterData.Create()
@@ -86,28 +84,28 @@ func ValidateParameters(r *http.Request, requestBody interface{}, requestParamet
 	if len(invalidParamErr) == 0 {
 		if httpErrorCode, err := queryParamData.BindSafeData(requestBody); err != nil {
 			queryParamBindDataError := errorhandling.CreateCustomError(err.Error(), httpErrorCode)
-			return queryParamBindDataError, nil, nil
+			return queryParamBindDataError, nil
 		}
 
 		if httpErrorCode, err := requestBodyData.BindSafeData(requestBody); err != nil {
 			requestDataBindError := errorhandling.CreateCustomError(err.Error(), httpErrorCode)
-			return requestDataBindError, nil, nil
+			return requestDataBindError, nil
 		}
-		return nil, nil, nil
+		return nil, nil
 	} else {
-		invalidParamsSingleLineErrMsg := errorhandling.CreateCustomError(fmt.Sprintf("Invalid data in:%s", strings.Join(invalidParamKeysArr, ", ")), http.StatusBadRequest)
+		// invalidParamsSingleLineErrMsg := errorhandling.CreateCustomError(fmt.Sprintf("Invalid data in:%s", strings.Join(invalidParamKeysArr, ", ")), http.StatusBadRequest)
 
 		var error string
 		for _, v := range invalidParamErr {
 			error += v.ErrorMessage
 		}
 		invalidParamsMultiLineErrMsg := errorhandling.CreateCustomError(error, http.StatusBadRequest)
-		return nil, invalidParamsMultiLineErrMsg, invalidParamsSingleLineErrMsg
+		return nil, invalidParamsMultiLineErrMsg
 	}
 
 }
 
-func CreateCustomErrorMsg(w http.ResponseWriter, r *http.Request) *validate.Validation {
+func CreateCustomErrorMs(w http.ResponseWriter, r *http.Request) *validate.Validation {
 	requestParameterData, err := validate.FromRequest(r)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)

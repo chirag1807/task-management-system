@@ -12,7 +12,6 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
-	"github.com/chirag1807/task-management-system/api/validation"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
@@ -50,12 +49,11 @@ func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.
 
 	var userQueryParams request.UserQueryParams
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -94,13 +92,12 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 	}
 	var userToUpdate request.User
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userToUpdate, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userToUpdate, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -153,12 +150,11 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 	}
 	var user request.User
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -216,12 +212,11 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var otp request.OTP
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &otp, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &otp, &requestParams, nil, nil, nil, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -237,7 +232,6 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &otp)
 	if err != nil {
-		log.Println(err)
 		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
 		return
 	}
@@ -260,13 +254,12 @@ func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request
 	}
 	var userEmailPassword request.User
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userEmailPassword, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userEmailPassword, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)

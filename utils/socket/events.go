@@ -31,7 +31,7 @@ func SocketEvents(server *socketio.Server) {
 	})
 }
 
-func EmitSocketEvents(server *socketio.Server, event string, room string, msg interface{}, flag int) {
+func EmitCreateAndUpdateTaskEvents(server *socketio.Server, event string, room string, msg interface{}, flag int) {
 	//flag = 0 => broadcast to individual via id as event and flag = 1 => broadcast to room
 	if flag == 0 {
 		server.BroadcastToNamespace("/", event, msg)

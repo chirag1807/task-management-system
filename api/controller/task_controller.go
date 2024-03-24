@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,13 +11,10 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
-	"github.com/chirag1807/task-management-system/api/socket"
-	"github.com/chirag1807/task-management-system/api/validation"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
 	"github.com/go-chi/chi/v5"
-	socketio "github.com/googollee/go-socket.io"
 )
 
 type TaskController interface {
@@ -50,13 +46,12 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	var taskToCreate request.Task
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &taskToCreate, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskToCreate, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -108,12 +103,11 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 
 	var taskQueryParams request.TaskQueryParams
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -162,12 +156,11 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 
 	var taskQueryParams request.TaskQueryParams
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -207,13 +200,12 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	var taskToUpdate request.Task
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &taskToUpdate, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskToUpdate, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -235,21 +227,13 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	taskToUpdate.UpdatedBy = &userId
-	taskToUpdate.UpdatedAt = time.Now().UTC()
+	taskToUpdate.UpdatedAt = new(time.Time)
+	*taskToUpdate.UpdatedAt = time.Now().UTC()
 
 	err = t.taskService.UpdateTask(taskToUpdate)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
-	}
-
-	socketServer := r.Context().Value(constant.SocketServerKey).(*socketio.Server)
-
-	if taskToUpdate.AssigneeIndividual != nil {
-		socket.EmitSocketEvents(socketServer, strconv.FormatInt(*taskToUpdate.AssigneeIndividual, 10), "", taskToUpdate, 0)
-	}
-	if taskToUpdate.AssigneeTeam != nil {
-		socket.EmitSocketEvents(socketServer, "", strconv.FormatInt(*taskToUpdate.AssigneeTeam, 10), taskToUpdate, 1)
 	}
 
 	response := response.SuccessResponse{

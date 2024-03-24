@@ -11,7 +11,6 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
-	"github.com/chirag1807/task-management-system/api/validation"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
@@ -46,13 +45,12 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	}
 	var team request.CreateTeam
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &team, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &team, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -99,13 +97,12 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 	}
 	var teamMembersToAdd request.TeamMembers
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamMembersToAdd, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamMembersToAdd, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -144,13 +141,12 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 	}
 	var teamMembersToRemove request.TeamMembers
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamMembersToRemove, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamMembersToRemove, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -197,12 +193,11 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 
 	var teamQueryParams request.TeamQueryParams
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -246,12 +241,11 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 
 	var teamQueryParams request.TeamQueryParams
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)

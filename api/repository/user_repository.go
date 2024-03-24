@@ -88,7 +88,7 @@ func (u userRepository) UpdateUserProfile(userId int64, userToUpdate request.Use
 			return errorhandling.LeftAllTeamsToMakeProfilePrivate
 		}
 	}
-	query, args, err := UpdateQuery("users", userToUpdate, userId)
+	query, args, err := UpdateQuery("users", userToUpdate, userId, 0)
 	if err != nil {
 		return err
 	}

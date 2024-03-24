@@ -9,8 +9,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func SetDBConection() (*pgx.Conn, *redis.Client, error) {
-	connConfig, err := pgx.ParseConfig(dbConnString())
+func SetDBConection(flag int) (*pgx.Conn, *redis.Client, error) {
+	//flag = 0 => main database connection, flag = 1 => test database connection
+	var connConfig *pgx.ConnConfig
+	var err error
+	if flag == 0 {
+		connConfig, err = pgx.ParseConfig(dbConnString())
+	} else {
+		connConfig, err = pgx.ParseConfig(testDbConnString())
+	}
 	if err != nil {
 		log.Println(err)
 		return nil, nil, err
@@ -37,5 +44,9 @@ func SetDBConection() (*pgx.Conn, *redis.Client, error) {
 }
 
 func dbConnString() string {
-	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@127.0.0.1:" + config.Config.Database.Port + "/" + config.Config.Database.Name + "?sslmode=" + config.Config.Database.SSLMode
+	return "postgresql://root@127.0.0.1:26257/taskmanager?sslmode=disable"
+}
+
+func testDbConnString() string {
+	return "postgresql://root@127.0.0.1:26257/testtaskmanager?sslmode=disable"
 }

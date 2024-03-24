@@ -8,8 +8,10 @@ import (
 
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
+	"github.com/chirag1807/task-management-system/utils/socket"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/go-redis/redis/v8"
+	socketio "github.com/googollee/go-socket.io"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -22,45 +24,33 @@ type TaskRepository interface {
 }
 
 type taskRepository struct {
-	dbConn      *pgx.Conn
-	redisClient *redis.Client
+	dbConn       *pgx.Conn
+	redisClient  *redis.Client
+	socketServer *socketio.Server
 }
 
-func NewTaskRepo(dbConn *pgx.Conn, redisClient *redis.Client) TaskRepository {
+func NewTaskRepo(dbConn *pgx.Conn, redisClient *redis.Client, socketServer *socketio.Server) TaskRepository {
 	return taskRepository{
-		dbConn:      dbConn,
-		redisClient: redisClient,
+		dbConn:       dbConn,
+		redisClient:  redisClient,
+		socketServer: socketServer,
 	}
 }
 
 func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 	var dbUserprofile string
-	var dbAssignedteam response.Team
+	var dbTeamProfile string
 
 	if taskToCreate.AssigneeIndividual != nil {
 		t.dbConn.QueryRow(context.Background(), `SELECT profile FROM users WHERE id = $1`, taskToCreate.AssigneeIndividual).Scan(&dbUserprofile)
 		if dbUserprofile != "Public" {
 			return 0, errorhandling.OnlyPublicUserAssignne
 		}
-		dbAssignedteam.TeamMembers.MemberID = append(dbAssignedteam.TeamMembers.MemberID, *taskToCreate.AssigneeIndividual)
 	} else if taskToCreate.AssigneeTeam != nil {
-		query := `
-        SELECT teams.id, teams.team_profile, array_agg(team_members.member_id) AS members
-        FROM teams
-        LEFT JOIN team_members ON teams.id = team_members.team_id
-        WHERE teams.id = $1
-        GROUP BY teams.id;
-    `
-		row := t.dbConn.QueryRow(context.Background(), query, taskToCreate.AssigneeTeam)
-
-		err := row.Scan(&dbAssignedteam.ID, &dbAssignedteam.TeamProfile, &dbAssignedteam.TeamMembers.MemberID)
-		if err != nil {
-			return 0, err
+		t.dbConn.QueryRow(context.Background(), `SELECT team_profile FROM teams WHERE id = $1`, taskToCreate.AssigneeTeam).Scan(&dbTeamProfile)
+		if dbTeamProfile != "Public" {
+			return 0, errorhandling.OnlyPublicUserAssignne
 		}
-		if dbAssignedteam.TeamProfile != "Public" {
-			return 0, errorhandling.OnlyPublicTeamAssignne
-		}
-
 	}
 
 	var taskID int64
@@ -83,7 +73,13 @@ func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 	}
 
 	if taskToCreate.AssigneeTeam != nil {
-		err = t.redisClient.SAdd(context.Background(), "tasks:assigned_to:"+strconv.FormatInt(*taskToCreate.AssigneeTeam, 10), taskID).Err()
+		err = t.redisClient.SAdd(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(*taskToCreate.AssigneeTeam, 10), taskID).Err()
+		if err != nil {
+			return 0, err
+		}
+	}
+	if taskToCreate.AssigneeIndividual != nil {
+		err = t.redisClient.SAdd(context.Background(), "tasks:assigned_to_user:"+strconv.FormatInt(*taskToCreate.AssigneeIndividual, 10), taskID).Err()
 		if err != nil {
 			return 0, err
 		}
@@ -94,12 +90,13 @@ func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 		return 0, err
 	}
 
-	for _, userID := range dbAssignedteam.TeamMembers.MemberID {
-		err = t.redisClient.SAdd(context.Background(), "tasks:assigned_to:"+strconv.FormatInt(userID, 10), taskID).Err()
-		if err != nil {
-			return 0, err
-		}
+	if taskToCreate.AssigneeIndividual != nil {
+		socket.EmitCreateAndUpdateTaskEvents(t.socketServer, strconv.FormatInt(*taskToCreate.AssigneeIndividual, 10), "", taskToCreate, 0)
 	}
+	if taskToCreate.AssigneeTeam != nil {
+		socket.EmitCreateAndUpdateTaskEvents(t.socketServer, "task-created", strconv.FormatInt(*taskToCreate.AssigneeTeam, 10), taskToCreate, 1)
+	}
+
 	return taskID, nil
 }
 
@@ -130,11 +127,22 @@ func (t taskRepository) GetAllTasks(userId int64, flag int, queryParams request.
 		}
 	}
 	if flag == 1 {
-		taskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:assigned_to:"+strconv.FormatInt(userId, 10)).Result()
-		fmt.Println("tasks:assigned_to:" + strconv.FormatInt(userId, 10))
+		taskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_user:"+strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
 			return nil, err
 		}
+		userTeams, err := t.redisClient.SMembers(context.Background(), "user:"+strconv.FormatInt(userId, 10)+":teams").Result()
+		if err != nil {
+			return nil, err
+		}
+		for _, teamID := range userTeams {
+			teamTaskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_team:"+teamID).Result()
+			if err != nil {
+				return nil, err
+			}
+			taskIDs = append(taskIDs, teamTaskIDs...)
+		}
+		fmt.Println(taskIDs)
 		tasksSlice, err = GetTasksFromRedisByIDList(t.redisClient, taskIDs)
 		if err != nil {
 			return nil, err
@@ -166,7 +174,17 @@ func (t taskRepository) GetAllTasks(userId int64, flag int, queryParams request.
 }
 
 func (t taskRepository) GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error) {
-	tasksSlice := make([]response.Task, 0)
+	teamTaskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(teamId, 10)).Result()
+	if err != nil {
+		return nil, err
+	}
+	tasksSlice, err := GetTasksFromRedisByIDList(t.redisClient, teamTaskIDs)
+	if err != nil {
+		return nil, err
+	}
+	if len(tasksSlice) != 0 {
+		return tasksSlice, nil
+	}
 
 	query := `SELECT * FROM tasks WHERE assignee_team = $1 AND true`
 	query = CreateQueryForParamsOfGetTask(query, queryParams)
@@ -203,23 +221,6 @@ func CreateQueryForParamsOfGetTask(query string, queryParams request.TaskQueryPa
 	return query
 }
 
-func GetTasksFromRedisByIDList(redisClient *redis.Client, taskIDs []string) ([]response.Task, error) {
-	var tasks []response.Task
-	for _, taskID := range taskIDs {
-		taskJSON, err := redisClient.Get(context.Background(), "tasks:"+taskID).Result()
-		if err != nil {
-			return tasks, err
-		}
-
-		var task response.Task
-		json.Unmarshal([]byte(taskJSON), &task)
-
-		tasks = append(tasks, task)
-	}
-
-	return tasks, nil
-}
-
 func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
 	var dbTask response.Task
 	task := t.dbConn.QueryRow(context.Background(), `SELECT * FROM tasks WHERE id = $1`, taskToUpdate.ID)
@@ -238,7 +239,7 @@ func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
 	}
 
 	if dbTask.AssigneeIndividual != nil {
-		if *dbTask.AssigneeIndividual != *taskToUpdate.UpdatedBy {
+		if *dbTask.AssigneeIndividual != *taskToUpdate.UpdatedBy && dbTask.CreatedBy != *taskToUpdate.UpdatedBy {
 			return errorhandling.NotAllowed
 		}
 	} else {
@@ -254,16 +255,81 @@ func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
 		return errorhandling.NotAllowed
 	}
 
-	_, _, err = UpdateQuery("tasks", taskToUpdate, taskToUpdate.ID)
+	query, args, err := UpdateQuery("tasks", taskToUpdate, taskToUpdate.ID, 1)
 	if err != nil {
 		return err
 	}
-	// _, err = t.dbConn.Exec(context.Background(), query, args...)
-	// if err != nil {
-	// 	return err
-	// }
+	_, err = t.dbConn.Exec(context.Background(), query, args...)
+	if err != nil {
+		return err
+	}
 
-	UpdateQueryForRedis(dbTask, taskToUpdate)
+	taskToUpdateinRedis := UpdateTaskFields(dbTask, taskToUpdate)
+	taskJSON, err := json.Marshal(taskToUpdateinRedis)
+	if err != nil {
+		return err
+	}
+	err = t.redisClient.Set(context.Background(), "tasks:"+strconv.FormatInt(taskToUpdateinRedis.ID, 10), taskJSON, 0).Err()
+	if err != nil {
+		return err
+	}
+
+	if taskToUpdate.AssigneeIndividual != nil || taskToUpdate.AssigneeTeam != nil {
+		if dbTask.AssigneeTeam != nil {
+			if taskToUpdate.AssigneeTeam != nil {
+				t.redisClient.SRem(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(*dbTask.AssigneeTeam, 10), taskToUpdate.ID)
+				t.redisClient.SAdd(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(*taskToUpdate.AssigneeTeam, 10), taskToUpdate.ID)
+			} else {
+				t.redisClient.SRem(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(*dbTask.AssigneeTeam, 10), taskToUpdate.ID)
+				t.redisClient.SAdd(context.Background(), "tasks:assigned_to_user:"+strconv.FormatInt(*taskToUpdate.AssigneeIndividual, 10), taskToUpdate.ID)
+			}
+		}
+		if dbTask.AssigneeIndividual != nil {
+			if taskToUpdate.AssigneeTeam != nil {
+				t.redisClient.SRem(context.Background(), "tasks:assigned_to_user:"+strconv.FormatInt(*dbTask.AssigneeIndividual, 10), taskToUpdate.ID)
+				t.redisClient.SAdd(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(*taskToUpdate.AssigneeTeam, 10), taskToUpdate.ID)
+			} else {
+				t.redisClient.SRem(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(*dbTask.AssigneeIndividual, 10), taskToUpdate.ID)
+				t.redisClient.SAdd(context.Background(), "tasks:assigned_to_user:"+strconv.FormatInt(*taskToUpdate.AssigneeIndividual, 10), taskToUpdate.ID)
+			}
+		}
+	}
+
+	if dbTask.AssigneeIndividual != nil {
+		if taskToUpdate.AssigneeIndividual != nil {
+			socket.EmitCreateAndUpdateTaskEvents(t.socketServer, strconv.FormatInt(*taskToUpdate.AssigneeIndividual, 10), "", taskToUpdateinRedis, 0)
+		} else if taskToUpdate.AssigneeTeam != nil {
+			socket.EmitCreateAndUpdateTaskEvents(t.socketServer, "task-updated", strconv.FormatInt(*taskToUpdate.AssigneeTeam, 10), taskToUpdateinRedis, 1)
+		} else {
+			socket.EmitCreateAndUpdateTaskEvents(t.socketServer, strconv.FormatInt(*dbTask.AssigneeIndividual, 10), "", taskToUpdateinRedis, 0)
+		}
+	}
+	if dbTask.AssigneeTeam != nil {
+		if taskToUpdate.AssigneeIndividual != nil {
+			socket.EmitCreateAndUpdateTaskEvents(t.socketServer, strconv.FormatInt(*taskToUpdate.AssigneeIndividual, 10), "", taskToUpdateinRedis, 0)
+		} else if taskToUpdate.AssigneeTeam != nil {
+			socket.EmitCreateAndUpdateTaskEvents(t.socketServer, "task-updated", strconv.FormatInt(*taskToUpdate.AssigneeTeam, 10), taskToUpdateinRedis, 1)
+		} else {
+			socket.EmitCreateAndUpdateTaskEvents(t.socketServer, "task-updated", strconv.FormatInt(*dbTask.AssigneeTeam, 10), taskToUpdateinRedis, 1)
+		}
+	}
 
 	return nil
+}
+
+func GetTasksFromRedisByIDList(redisClient *redis.Client, taskIDs []string) ([]response.Task, error) {
+	var tasks []response.Task
+	for _, taskID := range taskIDs {
+		taskJSON, err := redisClient.Get(context.Background(), "tasks:"+taskID).Result()
+		if err != nil {
+			return tasks, err
+		}
+
+		var task response.Task
+		json.Unmarshal([]byte(taskJSON), &task)
+
+		tasks = append(tasks, task)
+	}
+
+	return tasks, nil
 }

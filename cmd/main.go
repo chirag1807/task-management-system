@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/chirag1807/task-management-system/api/route"
-	"github.com/chirag1807/task-management-system/api/socket"
+	"github.com/chirag1807/task-management-system/utils/socket"
 	"github.com/chirag1807/task-management-system/config"
 	"github.com/chirag1807/task-management-system/db"
 )
 
 func main() {
 	config.LoadConfig("../.config")
-	dbConn, redisClient, err := db.SetDBConection()
+	dbConn, redisClient, err := db.SetDBConection(0)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,7 +27,7 @@ func main() {
 
 	port := fmt.Sprintf(":%d", config.Config.Port)
 	srv := &http.Server{
-		Addr:        port,
+		Addr:        "localhost" + port,
 		Handler:     r,
 		IdleTimeout: 2 * time.Minute,
 	}
@@ -39,8 +39,6 @@ func main() {
 		log.Println("yes")
 		defer socketServer.Close()
 	}()
-	// go socketServer.Serve()
-	// defer socketServer.Close()
 
 	log.Println("Server Started on Port", port)
 	log.Fatal(srv.ListenAndServe())

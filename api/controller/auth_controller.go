@@ -3,14 +3,12 @@ package controller
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
-	"github.com/chirag1807/task-management-system/api/validation"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
@@ -43,13 +41,12 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 	}
 	var userRequest request.User
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userRequest, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userRequest, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
@@ -91,18 +88,17 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 
 func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
-		constant.EmailKey:     `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
-		constant.PasswordKey:  "string|minLen:8|required",
+		constant.EmailKey:    `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
+		constant.PasswordKey: "string|minLen:8|required",
 	}
 	var userLoginRequest request.User
 
-	err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg := validation.ValidateParameters(r, &userLoginRequest, &requestParams, nil, nil, nil, nil)
+	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userLoginRequest, &requestParams, nil, nil, nil, nil)
 
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-	log.Println(err, invalidParamsMultiLineErrMsg, invalidParamsErrMsg)
 
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)

@@ -5,7 +5,7 @@ import (
 	"github.com/chirag1807/task-management-system/api/middleware"
 	"github.com/chirag1807/task-management-system/api/repository"
 	"github.com/chirag1807/task-management-system/api/service"
-	"github.com/chirag1807/task-management-system/api/socket"
+	"github.com/chirag1807/task-management-system/utils/socket"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/go-redis/redis/v8"
@@ -13,31 +13,21 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, server *socketio.Server) *chi.Mux {
+func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, socketServer *socketio.Server) *chi.Mux {
 	router := chi.NewRouter()
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 	})
-	socket.SocketEvents(server)
-	router.Handle("/socket.io/", c.Handler(server))
-
-	// router.Use(cors.Handler(cors.Options{
-	// 	AllowedOrigins:   []string{"https://*", "http://*"},
-	// 	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-	// 	AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-	// 	ExposedHeaders:   []string{"Link"},
-	// 	AllowCredentials: false,
-	// 	MaxAge:           300, // Maximum value not ignored by any of major browsers
-	// }))
-	// router.Handle("/socket.io/", server)
+	socket.SocketEvents(socketServer)
+	router.Handle("/socket.io/", c.Handler(socketServer))
 
 	authRepository := repository.NewAuthRepo(dbConn, redisClient)
 	authService := service.NewAuthService(authRepository)
 	authController := controller.NewAuthController(authService)
 
-	taskRepository := repository.NewTaskRepo(dbConn, redisClient)
+	taskRepository := repository.NewTaskRepo(dbConn, redisClient, socketServer)
 	taskService := service.NewTaskService(taskRepository)
 	taskController := controller.NewTaskController(taskService)
 
@@ -58,7 +48,6 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, server *socke
 	router.Route("/api/task", func(r chi.Router) {
 		r.Use(middleware.VerifyToken(0))
 		r.Group(func(r chi.Router) {
-			r.Use(middleware.SetSocketToReqContext(server))
 			r.Post("/create-task", taskController.CreateTask)
 			r.Put("/update-task", taskController.UpdateTask)
 		})

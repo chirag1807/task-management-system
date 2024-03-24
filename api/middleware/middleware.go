@@ -7,7 +7,6 @@ import (
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
-	socketio "github.com/googollee/go-socket.io"
 )
 
 // VerifyToken retrieves token from request header and send it to VerifyJWTToken function of utils package.
@@ -33,15 +32,6 @@ func VerifyToken(flag int) func(handler http.Handler) http.Handler {
 			}
 			ctx := context.WithValue(r.Context(), constant.TokenKey, token)
 			ctx = context.WithValue(ctx, constant.UserIdKey, userId)
-			handler.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
-
-func SetSocketToReqContext(server *socketio.Server) func(handler http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), constant.SocketServerKey, server)
 			handler.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
