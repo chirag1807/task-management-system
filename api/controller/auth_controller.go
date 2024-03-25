@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -142,6 +143,7 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a authController) ResetToken(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Context().Value(constant.TokenKey))
 	token := r.Context().Value(constant.TokenKey).(string)
 
 	userId, err := a.authService.ResetToken(token)

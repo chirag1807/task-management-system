@@ -42,7 +42,7 @@ func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 	var dbTeamProfile string
 
 	if taskToCreate.AssigneeIndividual != nil {
-		t.dbConn.QueryRow(context.Background(), `SELECT profile FROM users WHERE id = $1`, taskToCreate.AssigneeIndividual).Scan(&dbUserprofile)
+		t.dbConn.QueryRow(context.Background(), `SELECT profile FROM users WHERE id = $1`, *taskToCreate.AssigneeIndividual).Scan(&dbUserprofile)
 		if dbUserprofile != "Public" {
 			return 0, errorhandling.OnlyPublicUserAssignne
 		}
@@ -224,6 +224,8 @@ func CreateQueryForParamsOfGetTask(query string, queryParams request.TaskQueryPa
 func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
 	var dbTask response.Task
 	task := t.dbConn.QueryRow(context.Background(), `SELECT * FROM tasks WHERE id = $1`, taskToUpdate.ID)
+	fmt.Println(taskToUpdate.ID)
+
 	err := task.Scan(&dbTask.ID, &dbTask.Title, &dbTask.Description, &dbTask.Deadline, &dbTask.AssigneeIndividual, &dbTask.AssigneeTeam, &dbTask.Status,
 		&dbTask.Priority, &dbTask.CreatedBy, &dbTask.CreatedAt, &dbTask.UpdatedBy, &dbTask.UpdatedAt)
 

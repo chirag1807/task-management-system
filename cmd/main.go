@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	config.LoadConfig("../.config")
+	config.LoadConfig("../.config", "../.config/secret.json")
 	dbConn, redisClient, err := db.SetDBConection(0)
 	if err != nil {
 		log.Fatal(err)

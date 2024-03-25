@@ -54,6 +54,7 @@ func (a authRepository) UserLogin(user request.User) (response.User, string, err
 	}
 
 	passwordMatched := utils.VerifyPassword(user.Password, dbUser.Password)
+
 	if !passwordMatched {
 		return response.User{}, "", errorhandling.PasswordNotMatched
 	}

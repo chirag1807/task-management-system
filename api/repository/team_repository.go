@@ -258,6 +258,7 @@ func CreateQueryForParamsOfGetTeam(query string, queryParams request.TeamQueryPa
 }
 
 func (t teamRepository) LeftTeam(userID int64, teamID int64) error {
+	fmt.Println(teamID, userID)
 	a, err := t.dbConn.Exec(context.Background(), "DELETE FROM team_members WHERE member_id = $1 AND team_id = $2", userID, teamID)
 	if a.RowsAffected() == 0 {
 		return errorhandling.NotAMember

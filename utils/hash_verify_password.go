@@ -1,6 +1,8 @@
 package utils
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"golang.org/x/crypto/bcrypt"
+)
 
 // HashPassword uses crypto package's GenerateFromPassword to convert plain text password into hash format.
 func HashPassword(password string) (string, error) {

@@ -12,6 +12,7 @@ import (
 	"github.com/chirag1807/task-management-system/utils"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type UserRepository interface {
@@ -59,7 +60,7 @@ func (u userRepository) GetAllPublicProfileUsers(queryParams request.UserQueryPa
 func CreateQueryForParamsOfGetUser(query string, queryParams request.UserQueryParams) string {
 	if queryParams.Search != "" {
 		query += fmt.Sprintf(" AND (first_name ILIKE '%%%s%%' OR last_name ILIKE '%%%s%%' OR bio ILIKE '%%%s%%')",
-		 queryParams.Search, queryParams.Search, queryParams.Search)
+			queryParams.Search, queryParams.Search, queryParams.Search)
 	}
 	query += fmt.Sprintf(" LIMIT %d", queryParams.Limit)
 	query += fmt.Sprintf(" OFFSET %d", queryParams.Offset)
@@ -94,6 +95,10 @@ func (u userRepository) UpdateUserProfile(userId int64, userToUpdate request.Use
 	}
 	_, err = u.dbConn.Exec(context.Background(), query, args...)
 	if err != nil {
+		pgErr, ok := err.(*pgconn.PgError)
+		if ok && pgErr.Code == "23505" {
+			return errorhandling.DuplicateEmailFound
+		}
 		return err
 	}
 	return nil
@@ -137,17 +142,13 @@ func (u userRepository) VerifyOTP(otpFromUser request.OTP) error {
 	}
 	if rows.Next() {
 		if err := rows.Scan(&dbOTP.ID, &dbOTP.OTP, &dbOTP.OTPExpiryTime); err != nil {
-			return err
+			fmt.Println(err)
 		}
 		if time.Until(dbOTP.OTPExpiryTime) < 0 {
 			return errorhandling.OTPVerificationTimeExpired
 		} else if dbOTP.OTP != otpFromUser.OTP {
 			return errorhandling.OTPNotMatched
 		} else {
-			_, err = u.dbConn.Exec(context.Background(), `DELETE FROM otps WHERE id = $1`, otpFromUser.ID)
-			if err != nil {
-				return err
-			}
 			return nil
 		}
 	} else {
@@ -161,7 +162,7 @@ func (u userRepository) ResetUserPassword(userEmailPassword request.User) error 
 	// if userCount == 0 {
 	// 	return errorhandling.NoEmailFound
 	// }
-	_, err := u.dbConn.Exec(context.Background(), "UPDATE users SET password = $1 WHERE email = $2", userEmailPassword.NewPassword, userEmailPassword.Email)
+	_, err := u.dbConn.Exec(context.Background(), "UPDATE users SET password = $1 WHERE email = $2", userEmailPassword.Password, userEmailPassword.Email)
 	if err != nil {
 		return err
 	}

@@ -14,7 +14,7 @@ var JWtSecretKey dto.JWTSecret
 
 // LoadConfig uses viper package to load all env variables into config(package:dto) struct via above declared global Config variable.
 // Moreover it also read secret.json file of .config directory and load content into above declared global JWtSecretKey variable.
-func LoadConfig(envFilePath string) {
+func LoadConfig(envFilePath string, secretJsonFilePath string) {
 	viper.AutomaticEnv()
 	viper.SetConfigType("env")
 	viper.SetConfigName(".env")
@@ -28,7 +28,7 @@ func LoadConfig(envFilePath string) {
 		log.Fatal(err)
 	}
 
-	jwtSecretKeyFileContent, err := os.ReadFile("../.config/secret.json")
+	jwtSecretKeyFileContent, err := os.ReadFile(secretJsonFilePath)
 
 	if err != nil {
 		log.Fatal(err)
