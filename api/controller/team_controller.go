@@ -36,6 +36,20 @@ func NewTeamController(teamService service.TeamService) TeamController {
 	}
 }
 
+// CreateTeam creates a new team.
+// @Summary Create New Team
+// @Description CreateTeam API is made for creating a new team in the task manager application.
+// @Accept json
+// @Produce json
+// @Tags teams
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Param teamDetails formData request.TeamDetails true "Team name and profile"
+// @Param teamMembers formData request.TeamMembers true "Ids of user who will be added to the team."
+// @Success 200 {object} response.SuccessResponse "Team created successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request"
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/team/create-team [post]
 func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamNameKey:      "string|minLen:3|maxLen:15|required",
@@ -106,7 +120,7 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} errorhandling.CustomError "Not allowed to add members."
 // @Failure 409 {object} errorhandling.CustomError "Member already exist."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/teams/add-members-to-team [put]
+// @Router /api/team/add-members-to-team [put]
 func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamIdKey:       "number|required",
@@ -166,7 +180,7 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 403 {object} errorhandling.CustomError "Not allowed to add members."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/teams/remove-members-from-team [put]
+// @Router /api/team/remove-members-from-team [put]
 func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamIdKey:       "number|required",
@@ -212,6 +226,23 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// GetAllTeams fetches all teams of user.
+// @Summary Get all teams
+// @Description Get all teams of user based on query parameters
+// @Produce json
+// @Tags teams
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Param Flag path int true "Flag indicating 0 means teams created by user and 1 means teams in which user were added."
+// @Param limit query int false "Number of tasks to return per page (default 10)"
+// @Param offset query int false "Offset for pagination (default 0)"
+// @Param search query string false "Search term to filter tasks"
+// @Param sortByCreatedAt query bool false "Sort tasks by create time (true for ascending, false for descending)"
+// @Success 200 {object} response.Teams "Teams fetched successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request"
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
+// @Failure 422 {object} errorhandling.CustomError "Provide valid flag"
+// @Failure 500 {object} errorhandling.CustomError "Internal server error"
+// @Router /api/team/get-all-teams/{Flag} [get]
 func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
 		constant.LimitKey:          "number|default:10",
@@ -263,6 +294,20 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetTeamMembers fetches all members of the team.
+// @Summary Get all team members
+// @Description Get all members of team based on query parameters
+// @Produce json
+// @Tags teams
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Param TeamID path int64 true "ID of team whose members you want."
+// @Param limit query int false "Number of tasks to return per page (default 10)"
+// @Param offset query int false "Offset for pagination (default 0)"
+// @Success 200 {object} response.TeamMemberDetails "Team members fetched successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request"
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error"
+// @Router /api/task/get-team-members/{TeamID} [get]
 func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
 		constant.LimitKey:  "number|default:10",
@@ -306,6 +351,17 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// LeftTeam removes user from particular team.
+// @Summary Left Team
+// @Description Removes user from particular team
+// @Produce json
+// @Tags teams
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Param TeamID path int64 true "ID of team whose members you want."
+// @Success 200 {object} response.SuccessResponse "Team left successfully."
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired or you are not a member of that team."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error"
+// @Router /api/task/left-team/{TeamID} [delete]
 func (t teamController) LeftTeam(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
