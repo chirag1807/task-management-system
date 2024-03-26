@@ -7,9 +7,10 @@ import (
 	"github.com/chirag1807/task-management-system/config"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func SetDBConection(flag int) (*pgx.Conn, *redis.Client, error) {
+func SetDBConection(flag int) (*pgx.Conn, *redis.Client, *amqp.Connection) {
 	//flag = 0 => main database connection, flag = 1 => test database connection
 	var connConfig *pgx.ConnConfig
 	var err error
@@ -19,14 +20,12 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, error) {
 		connConfig, err = pgx.ParseConfig(testDbConnString())
 	}
 	if err != nil {
-		log.Println(err)
-		return nil, nil, err
+		log.Fatal(err)
 	}
 
 	dbConn, err := pgx.ConnectConfig(context.Background(), connConfig)
 	if err != nil {
-		log.Println(err)
-		return nil, nil, err
+		log.Fatal(err)
 	}
 
 	redisClient := redis.NewClient(&redis.Options{
@@ -36,17 +35,21 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, error) {
 	})
 	_, err = redisClient.Ping(context.Background()).Result()
 	if err != nil {
-		log.Println(err)
-		return nil, nil, err
+		log.Fatal(err)
 	}
 
-	return dbConn, redisClient, nil
+	rabbitmqConn, err := amqp.Dial("amqp://" + config.Config.RabbitMQ.Username + ":" + config.Config.RabbitMQ.Password + "@localhost:" + config.Config.RabbitMQ.Port + "/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return dbConn, redisClient, rabbitmqConn
 }
 
 func dbConnString() string {
-	return "postgresql://root@127.0.0.1:26257/taskmanager?sslmode=disable"
+	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@127.0.0.1:" + config.Config.Database.Port + "/" + config.Config.Database.Name + "?sslmode=" + config.Config.Database.SSLMode
 }
 
 func testDbConnString() string {
-	return "postgresql://root@127.0.0.1:26257/testtaskmanager?sslmode=disable"
+	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@127.0.0.1:" + config.Config.Database.Port + "/" + config.Config.Database.TestDatabaseName + "?sslmode=" + config.Config.Database.SSLMode
 }

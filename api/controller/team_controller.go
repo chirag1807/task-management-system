@@ -41,7 +41,7 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 		constant.TeamNameKey:      "string|minLen:3|maxLen:15|required",
 		constant.TeamProfileKey:   "string|in:Public,Private",
 		constant.TeamMembersKey:   "required",
-		constant.TeamMembersIdKey: "slice|required",
+		constant.TeamMembersIdKey: "slice",
 	}
 	var team request.CreateTeam
 
@@ -77,19 +77,36 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 		team.TeamDetails.TeamProfile = &defaultTeamProfile
 	}
 	team.TeamMembers.MemberID = append(team.TeamMembers.MemberID, userId)
-	log.Println(team.TeamDetails, team.TeamMembers)
 
-	err = t.teamService.CreateTeam(team.TeamDetails, team.TeamMembers)
+	teamId, err := t.teamService.CreateTeam(team.TeamDetails, team.TeamMembers)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
 	response := response.SuccessResponse{
 		Message: constant.TEAM_CREATED,
+		ID:      &teamId,
 	}
+	log.Println("Team Created Successfully.")
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// AddMembersToTeam adds members to a team.
+// @Summary Add members to a team
+// @Description Add members to a team based on provided parameters
+// @Accept json
+// @Produce json
+// @Tags teams
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Param teamID formData int true "Team ID"
+// @Param memberID formData array true "Array of member IDs to add to the team"
+// @Success 200 {object} response.SuccessResponse "Members added successfully"
+// @Failure 400 {object} errorhandling.CustomError "Bad request"
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
+// @Failure 403 {object} errorhandling.CustomError "Not allowed to add members."
+// @Failure 409 {object} errorhandling.CustomError "Member already exist."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/teams/add-members-to-team [put]
 func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamIdKey:       "number|required",
@@ -131,9 +148,25 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 	response := response.SuccessResponse{
 		Message: constant.MEMBERS_ADDED_TO_TEAM,
 	}
+	log.Println("Members Added to Team Successfully.")
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// RemoveMembersFromTeam removes members from a team.
+// @Summary Remove members from a team
+// @Description Remove members from a team based on provided parameters
+// @Accept json
+// @Produce json
+// @Tags teams
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Param teamID formData int true "Team ID"
+// @Param memberID formData array true "Array of member IDs to add to the team"
+// @Success 200 {object} response.SuccessResponse "Members Removed successfully"
+// @Failure 400 {object} errorhandling.CustomError "Bad request"
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
+// @Failure 403 {object} errorhandling.CustomError "Not allowed to add members."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/teams/remove-members-from-team [put]
 func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamIdKey:       "number|required",
@@ -175,6 +208,7 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 	response := response.SuccessResponse{
 		Message: constant.MEMBERS_REMOVED_FROM_TEAM,
 	}
+	log.Println("Members Removed from Team Successfully.")
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
@@ -291,5 +325,6 @@ func (t teamController) LeftTeam(w http.ResponseWriter, r *http.Request) {
 	response := response.SuccessResponse{
 		Message: constant.LEFT_TEAM,
 	}
+	log.Println("Team Left Successfully.")
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }

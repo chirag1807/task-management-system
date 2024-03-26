@@ -1,0 +1,872 @@
+basePath: /
+definitions:
+  errorhandling.CustomError:
+    properties:
+      errorMessage:
+        example: Corresponding Error Message will Show Here
+        type: string
+      statusCode:
+        example: 0
+        type: integer
+    type: object
+  response.AccessToken:
+    description: Used to send access token to response.
+    properties:
+      accessToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+    type: object
+  response.SuccessResponse:
+    description: Send success response to client with corresponding message and id(if
+      any).
+    properties:
+      id:
+        example: 974751326021189896
+        type: integer
+      message:
+        example: Task Created Successfully.
+        type: string
+    type: object
+  response.Task:
+    description: Task information with title, description, deadline, assignee, status,
+      priority.
+    properties:
+      assigneeIndividual:
+        example: 974751326021189123
+        type: integer
+      assigneeTeam:
+        example: 974751326021189234
+        type: integer
+      createdAt:
+        example: "2024-03-25T22:59:59.000Z"
+        type: string
+      createdBy:
+        example: 974751326021189896
+        type: integer
+      deadline:
+        example: "2024-03-25T22:59:59.000Z"
+        type: string
+      description:
+        example: Create Task Manager Project with GoLang as Backend.
+        type: string
+      id:
+        example: 974751326021189496
+        type: integer
+      priority:
+        example: High
+        type: string
+      status:
+        example: TO-DO
+        type: string
+      title:
+        example: 'GoLang project: Task Manager'
+        type: string
+      updatedAt:
+        example: 2024-03-26T12:49:539.000Z
+        type: string
+      updatedBy:
+        example: 974751326021189896
+        type: integer
+    type: object
+  response.Tasks:
+    description: Send array of tasks to response.
+    properties:
+      tasks:
+        items:
+          $ref: '#/definitions/response.Task'
+        type: array
+    type: object
+  response.User:
+    description: User information with id, first name, last name, bio, email, password
+      and profile.
+    properties:
+      bio:
+        example: Junior Software Engineer at ZURU TECH INDIA.
+        type: string
+      email:
+        example: chiragmakwana@gmail.com
+        type: string
+      firstName:
+        example: Chirag
+        type: string
+      id:
+        example: 974751326021189896
+        type: integer
+      lastName:
+        example: Makwana
+        type: string
+      password:
+        example: Chirag123$
+        type: string
+      profile:
+        example: Public
+        type: string
+    type: object
+  response.UserWithTokens:
+    description: Send user info along with access token and refresh token to response.
+    properties:
+      accessToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+      refreshToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+      user:
+        $ref: '#/definitions/response.User'
+    type: object
+  response.Users:
+    description: Send array of user to response.
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/response.User'
+        type: array
+    type: object
+host: localhost:9090
+info:
+  contact: {}
+  description: This is the api documentation of task manager project.
+  title: Task Manager API Documentation
+  version: "1.0"
+paths:
+  /api/auth/reset-token:
+    post:
+      description: ResetToken API is made for reset the user's access token.
+      parameters:
+      - default: Bearer <refresh_token>
+        description: Refresh Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token reset done successfully.
+          schema:
+            $ref: '#/definitions/response.AccessToken'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Reset Access Token
+      tags:
+      - auth
+  /api/auth/user-login:
+    post:
+      consumes:
+      - application/json
+      description: UserLogin API is made for login the user in task manager application.
+      parameters:
+      - description: Email of the user
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Password of the user
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User login done successfully.
+          schema:
+            $ref: '#/definitions/response.UserWithTokens'
+        "400":
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Password not matched.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "404":
+          description: User not found.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Login User
+      tags:
+      - auth
+  /api/auth/user-registration:
+    post:
+      consumes:
+      - application/json
+      description: UserRegistration API is made for registering a new user in the
+        task manager application.
+      parameters:
+      - description: First name of the user
+        in: formData
+        name: firstName
+        required: true
+        type: string
+      - description: Last name of the user
+        in: formData
+        name: lastName
+        required: true
+        type: string
+      - description: Bio of the user
+        in: formData
+        name: bio
+        required: true
+        type: string
+      - description: Email of the user
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Password of the user
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Profile of the user (Public, Private)
+        in: formData
+        name: profile
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User created successfully.
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "409":
+          description: Duplicate email found.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Register User
+      tags:
+      - auth
+  /api/task/create-task:
+    post:
+      consumes:
+      - application/json
+      description: CreateTask API is made for creating a new task in the task manager
+        application.
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 'Title of the task (min length: 4, max length: 48)'
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: 'Description of the task (min length: 12, max length: 196)'
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: ID of the individual assignee
+        in: formData
+        name: assigneeIndividual
+        type: integer
+      - description: ID of the team assignee
+        in: formData
+        name: assigneeTeam
+        type: integer
+      - description: Status of the task (TO-DO, In-Progress, Completed, Closed)
+        in: formData
+        name: status
+        required: true
+        type: string
+      - description: Priority of the task (Low, Medium, High, Very High)
+        in: formData
+        name: priority
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task created successfully.
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request, either data is not valid or assignee profile is
+            Private.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Create New Task
+      tags:
+      - tasks
+  /api/task/get-all-tasks/{Flag}:
+    get:
+      description: Get all tasks of user based on query parameters
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Flag indicating 0 means tasks created by user and 1 means tasks
+          assigned to user.
+        in: path
+        name: Flag
+        required: true
+        type: integer
+      - description: Number of tasks to return per page (default 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination (default 0)
+        in: query
+        name: offset
+        type: integer
+      - description: Search term to filter tasks
+        in: query
+        name: search
+        type: string
+      - description: Filter tasks by status (TO-DO, In-Progress, Completed, Closed)
+        in: query
+        name: status
+        type: string
+      - description: Sort tasks by create time (true for ascending, false for descending)
+        in: query
+        name: sortByFilter
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tasks fetched successfully.
+          schema:
+            $ref: '#/definitions/response.Tasks'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "422":
+          description: Provide valid flag
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Get all tasks
+      tags:
+      - tasks
+  /api/task/get-tasks-of-team/{TeamID}:
+    get:
+      description: Get all tasks of a team based on query parameters
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Team ID
+        in: path
+        name: TeamID
+        required: true
+        type: integer
+      - description: Number of tasks to return per page (default 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination (default 0)
+        in: query
+        name: offset
+        type: integer
+      - description: Search term to filter tasks
+        in: query
+        name: search
+        type: string
+      - description: Filter tasks by status (TO-DO, In-Progress, Completed, Closed)
+        in: query
+        name: status
+        type: string
+      - description: Sort tasks by create time (true for ascending, false for descending)
+        in: query
+        name: sortByFilter
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tasks fetched successfully.
+          schema:
+            $ref: '#/definitions/response.Tasks'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Get all tasks of a team
+      tags:
+      - tasks
+  /api/task/update-task:
+    put:
+      consumes:
+      - application/json
+      description: Update a task based on provided parameters
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of task
+        in: formData
+        name: id
+        required: true
+        type: integer
+      - description: 'Title of the task (min length: 4, max length: 48)'
+        in: formData
+        name: title
+        type: string
+      - description: 'Description of the task (min length: 12, max length: 196)'
+        in: formData
+        name: description
+        type: string
+      - description: ID of the individual assignee
+        in: formData
+        name: assigneeIndividual
+        type: integer
+      - description: ID of the team assignee
+        in: formData
+        name: assigneeTeam
+        type: integer
+      - description: Status of the task (TO-DO, In-Progress, Completed, Closed)
+        in: formData
+        name: status
+        type: string
+      - description: Priority of the task (Low, Medium, High, Very High)
+        in: formData
+        name: priority
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task updated successfully
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "403":
+          description: Not allowed to update task
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "404":
+          description: Task not found
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "422":
+          description: Task is closed
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Update a task
+      tags:
+      - tasks
+  /api/teams/add-members-to-team:
+    put:
+      consumes:
+      - application/json
+      description: Add members to a team based on provided parameters
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Team ID
+        in: formData
+        name: teamID
+        required: true
+        type: integer
+      - description: Array of member IDs to add to the team
+        in: formData
+        name: memberID
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Members added successfully
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "403":
+          description: Not allowed to add members.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "409":
+          description: Member already exist.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Add members to a team
+      tags:
+      - teams
+  /api/teams/remove-members-from-team:
+    put:
+      consumes:
+      - application/json
+      description: Remove members from a team based on provided parameters
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Team ID
+        in: formData
+        name: teamID
+        required: true
+        type: integer
+      - description: Array of member IDs to add to the team
+        in: formData
+        name: memberID
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Members Removed successfully
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "403":
+          description: Not allowed to add members.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Remove members from a team
+      tags:
+      - teams
+  /api/user/get-my-details:
+    get:
+      description: Get details of the authenticated user based on the authenticated
+        user ID provided via token.
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/response.User'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Get details of the authenticated user
+      tags:
+      - users
+  /api/user/get-public-profile-users:
+    get:
+      description: Get all public profile users based on query parameters
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Number of users to return per page (default 10)
+        in: query
+        name: Limit
+        type: integer
+      - description: Offset for pagination (default 0)
+        in: query
+        name: Offset
+        type: integer
+      - description: Search term to filter users
+        in: query
+        name: Search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Public profile users fetched successfully
+          schema:
+            $ref: '#/definitions/response.Users'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Get all public profile users
+      tags:
+      - users
+  /api/user/reset-user-password:
+    put:
+      consumes:
+      - application/json
+      description: ResetUserPassword API is made for reset user password.
+      parameters:
+      - description: Email of the user
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: New password of the user
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset done successfully.
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: reset user password
+      tags:
+      - users
+  /api/user/send-otp-to-user:
+    post:
+      consumes:
+      - application/json
+      description: SendOTPToUser API is made for sending an otp to user's email address.
+      parameters:
+      - description: Email of the user
+        in: formData
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP sent successfully.
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "404":
+          description: No Email found.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Sends an OTP
+      tags:
+      - users
+  /api/user/update-user-profile:
+    put:
+      consumes:
+      - application/json
+      description: UpdateUserProfile API is made for updating a user's profile.
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: First name of the user
+        in: formData
+        name: firstName
+        type: string
+      - description: Last name of the user
+        in: formData
+        name: lastName
+        type: string
+      - description: Bio of the user
+        in: formData
+        name: bio
+        type: string
+      - description: Email of the user
+        in: formData
+        name: email
+        type: string
+      - description: Password of the user
+        in: formData
+        name: password
+        type: string
+      - description: Profile of the user (Public, Private)
+        in: formData
+        name: profile
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User Updated successfully.
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either password not matched or need to left from all teams
+            or token expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "404":
+          description: No user found.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "409":
+          description: Duplicate email found.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Update User Profile
+      tags:
+      - users
+  /api/user/verify-otp:
+    post:
+      consumes:
+      - application/json
+      description: VerifyOTP API is made for verifying an otp from user.
+      parameters:
+      - description: ID which you've received in response of SendOTPToUser API
+        in: formData
+        name: id
+        required: true
+        type: integer
+      - description: OTP which user has entered
+        in: formData
+        name: otp
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP Verifies successfully.
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: OTP not matched.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "403":
+          description: OTP verification time expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Verifies an OTP
+      tags:
+      - users
+swagger: "2.0"

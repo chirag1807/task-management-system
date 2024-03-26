@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/chirag1807/task-management-system/api/model/request"
@@ -15,7 +14,7 @@ import (
 )
 
 type TeamRepository interface {
-	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) error
+	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error)
 	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error
 	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error
 	GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error)
@@ -36,17 +35,17 @@ func NewTeamRepo(dbConn *pgx.Conn, redisClient *redis.Client) TeamRepository {
 	}
 }
 
-func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) error {
+func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error) {
 	ctx := context.Background()
 	tx, err := t.dbConn.Begin(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	var teamId int64
 	err = tx.QueryRow(ctx, `INSERT INTO teams (name, team_profile, created_by) VALUES ($1, $2, $3) RETURNING id`, teamToCreate.Name, teamToCreate.TeamProfile, teamToCreate.CreatedBy).Scan(&teamId)
 	if err != nil {
 		tx.Rollback(ctx)
-		return err
+		return teamId, err
 	}
 
 	batch := &pgx.Batch{}
@@ -59,22 +58,22 @@ func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers reques
 
 	if err := results.Close(); err != nil {
 		tx.Rollback(ctx)
-		return err
+		return teamId, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		tx.Rollback(ctx)
-		return err
+		return teamId, err
 	}
 
 	for _, v := range teamMembers.MemberID {
 		err = t.redisClient.SAdd(ctx, "user:"+strconv.FormatInt(v, 10)+":teams", teamId).Err()
 		if err != nil {
-			return err
+			return teamId, err
 		}
 	}
 
-	return nil
+	return teamId, nil
 }
 
 func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error {
@@ -94,7 +93,7 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	query = query[:len(query)-2]
 	query += `)`
 
-	log.Println(query, args)
+	fmt.Println(query, args)
 
 	users, err := t.dbConn.Query(context.Background(), query, args...)
 	if err != nil {

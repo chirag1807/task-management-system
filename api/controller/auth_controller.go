@@ -31,6 +31,23 @@ func NewAuthController(authService service.AuthService) AuthController {
 	}
 }
 
+// UserRegistration registers a new user in the task manager application.
+// @Summary Register User
+// @Description UserRegistration API is made for registering a new user in the task manager application.
+// @Accept json
+// @Produce json
+// @Tags auth
+// @Param firstName formData string true "First name of the user"
+// @Param lastName formData string true "Last name of the user"
+// @Param bio formData string true "Bio of the user"
+// @Param email formData string true "Email of the user"
+// @Param password formData string true "Password of the user"
+// @Param profile formData string true "Profile of the user (Public, Private)"
+// @Success 200 {object} response.SuccessResponse "User created successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request."
+// @Failure 409 {object} errorhandling.CustomError "Duplicate email found."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/auth/user-registration [post]
 func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.FirstNameKey: "string|minLen:2|required",
@@ -84,9 +101,24 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 		Message: constant.USER_REGISTRATION_SUCCEED,
 		ID:      &userId,
 	}
+	log.Println("User Registration Done Successfully.")
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// UserLogin login the user in task manager application.
+// @Summary Login User
+// @Description UserLogin API is made for login the user in task manager application.
+// @Accept json
+// @Produce json
+// @Tags auth
+// @Param email formData string true "Email of the user"
+// @Param password formData string true "Password of the user"
+// @Success 200 {object} response.UserWithTokens "User login done successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request."
+// @Failure 401 {object} errorhandling.CustomError "Password not matched."
+// @Failure 404 {object} errorhandling.CustomError "User not found."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/auth/user-login [post]
 func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.EmailKey:    `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
@@ -139,9 +171,20 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}
+	log.Println("User Login Done Successfully.")
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// ResetToken reset the access token of user.
+// @Summary Reset Access Token
+// @Description ResetToken API is made for reset the user's access token.
+// @Produce json
+// @Tags auth
+// @Param Authorization header string true "Refresh Token" default(Bearer <refresh_token>)
+// @Success 200 {object} response.AccessToken "Token reset done successfully."
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/auth/reset-token [post]
 func (a authController) ResetToken(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Context().Value(constant.TokenKey))
 	token := r.Context().Value(constant.TokenKey).(string)
@@ -161,5 +204,6 @@ func (a authController) ResetToken(w http.ResponseWriter, r *http.Request) {
 	response := response.AccessToken{
 		AccessToken: accessToken,
 	}
+	log.Println("Token Reset Done Successfully.")
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }

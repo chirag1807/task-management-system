@@ -36,7 +36,7 @@ func TestCreateTeam(t *testing.T) {
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
 
-			err := NewTeamRepo(dbConn, redisClient).CreateTeam(v.TeamDetails, v.TeamMembers)
+			_, err := NewTeamRepo(dbConn, redisClient).CreateTeam(v.TeamDetails, v.TeamMembers)
 			assert.Equal(t, v.Expected, err)
 		})
 	}

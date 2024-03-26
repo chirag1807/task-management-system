@@ -1,0 +1,1275 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is the api documentation of task manager project.",
+        "title": "Task Manager API Documentation",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:9090",
+    "basePath": "/",
+    "paths": {
+        "/api/auth/reset-token": {
+            "post": {
+                "description": "ResetToken API is made for reset the user's access token.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Reset Access Token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003crefresh_token\u003e",
+                        "description": "Refresh Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token reset done successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.AccessToken"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/user-login": {
+            "post": {
+                "description": "UserLogin API is made for login the user in task manager application.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email of the user",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password of the user",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User login done successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.UserWithTokens"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Password not matched.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/user-registration": {
+            "post": {
+                "description": "UserRegistration API is made for registering a new user in the task manager application.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register User",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "First name of the user",
+                        "name": "firstName",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Last name of the user",
+                        "name": "lastName",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bio of the user",
+                        "name": "bio",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email of the user",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password of the user",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Profile of the user (Public, Private)",
+                        "name": "profile",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User created successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicate email found.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/task/create-task": {
+            "post": {
+                "description": "CreateTask API is made for creating a new task in the task manager application.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Create New Task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Title of the task (min length: 4, max length: 48)",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Description of the task (min length: 12, max length: 196)",
+                        "name": "description",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of the individual assignee",
+                        "name": "assigneeIndividual",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of the team assignee",
+                        "name": "assigneeTeam",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status of the task (TO-DO, In-Progress, Completed, Closed)",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Priority of the task (Low, Medium, High, Very High)",
+                        "name": "priority",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task created successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request, either data is not valid or assignee profile is Private.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/task/get-all-tasks/{Flag}": {
+            "get": {
+                "description": "Get all tasks of user based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get all tasks",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Flag indicating 0 means tasks created by user and 1 means tasks assigned to user.",
+                        "name": "Flag",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of tasks to return per page (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term to filter tasks",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Sort tasks by create time (true for ascending, false for descending)",
+                        "name": "sortByFilter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tasks fetched successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Tasks"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "422": {
+                        "description": "Provide valid flag",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/task/get-tasks-of-team/{TeamID}": {
+            "get": {
+                "description": "Get all tasks of a team based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get all tasks of a team",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "TeamID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of tasks to return per page (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term to filter tasks",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Sort tasks by create time (true for ascending, false for descending)",
+                        "name": "sortByFilter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tasks fetched successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Tasks"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/task/update-task": {
+            "put": {
+                "description": "Update a task based on provided parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Update a task",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of task",
+                        "name": "id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Title of the task (min length: 4, max length: 48)",
+                        "name": "title",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Description of the task (min length: 12, max length: 196)",
+                        "name": "description",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of the individual assignee",
+                        "name": "assigneeIndividual",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of the team assignee",
+                        "name": "assigneeTeam",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status of the task (TO-DO, In-Progress, Completed, Closed)",
+                        "name": "status",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Priority of the task (Low, Medium, High, Very High)",
+                        "name": "priority",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "403": {
+                        "description": "Not allowed to update task",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "404": {
+                        "description": "Task not found",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "422": {
+                        "description": "Task is closed",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/teams/add-members-to-team": {
+            "put": {
+                "description": "Add members to a team based on provided parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Add members to a team",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "teamID",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "description": "Array of member IDs to add to the team",
+                        "name": "memberID",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Members added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "403": {
+                        "description": "Not allowed to add members.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "409": {
+                        "description": "Member already exist.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/teams/remove-members-from-team": {
+            "put": {
+                "description": "Remove members from a team based on provided parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Remove members from a team",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "teamID",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "description": "Array of member IDs to add to the team",
+                        "name": "memberID",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Members Removed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "403": {
+                        "description": "Not allowed to add members.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/get-my-details": {
+            "get": {
+                "description": "Get details of the authenticated user based on the authenticated user ID provided via token.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get details of the authenticated user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "$ref": "#/definitions/response.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/get-public-profile-users": {
+            "get": {
+                "description": "Get all public profile users based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get all public profile users",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of users to return per page (default 10)",
+                        "name": "Limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "Offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term to filter users",
+                        "name": "Search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Public profile users fetched successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.Users"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/reset-user-password": {
+            "put": {
+                "description": "ResetUserPassword API is made for reset user password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "reset user password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email of the user",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "New password of the user",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset done successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/send-otp-to-user": {
+            "post": {
+                "description": "SendOTPToUser API is made for sending an otp to user's email address.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Sends an OTP",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email of the user",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "404": {
+                        "description": "No Email found.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/update-user-profile": {
+            "put": {
+                "description": "UpdateUserProfile API is made for updating a user's profile.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update User Profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "First name of the user",
+                        "name": "firstName",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Last name of the user",
+                        "name": "lastName",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bio of the user",
+                        "name": "bio",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email of the user",
+                        "name": "email",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password of the user",
+                        "name": "password",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Profile of the user (Public, Private)",
+                        "name": "profile",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User Updated successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either password not matched or need to left from all teams or token expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "404": {
+                        "description": "No user found.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "409": {
+                        "description": "Duplicate email found.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/verify-otp": {
+            "post": {
+                "description": "VerifyOTP API is made for verifying an otp from user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Verifies an OTP",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID which you've received in response of SendOTPToUser API",
+                        "name": "id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "OTP which user has entered",
+                        "name": "otp",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP Verifies successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "OTP not matched.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "403": {
+                        "description": "OTP verification time expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "errorhandling.CustomError": {
+            "type": "object",
+            "properties": {
+                "errorMessage": {
+                    "type": "string",
+                    "example": "Corresponding Error Message will Show Here"
+                },
+                "statusCode": {
+                    "type": "integer",
+                    "example": 0
+                }
+            }
+        },
+        "response.AccessToken": {
+            "description": "Used to send access token to response.",
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                }
+            }
+        },
+        "response.SuccessResponse": {
+            "description": "Send success response to client with corresponding message and id(if any).",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 974751326021189896
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Task Created Successfully."
+                }
+            }
+        },
+        "response.Task": {
+            "description": "Task information with title, description, deadline, assignee, status, priority.",
+            "type": "object",
+            "properties": {
+                "assigneeIndividual": {
+                    "type": "integer",
+                    "example": 974751326021189123
+                },
+                "assigneeTeam": {
+                    "type": "integer",
+                    "example": 974751326021189234
+                },
+                "createdAt": {
+                    "type": "string",
+                    "example": "2024-03-25T22:59:59.000Z"
+                },
+                "createdBy": {
+                    "type": "integer",
+                    "example": 974751326021189896
+                },
+                "deadline": {
+                    "type": "string",
+                    "example": "2024-03-25T22:59:59.000Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Create Task Manager Project with GoLang as Backend."
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 974751326021189496
+                },
+                "priority": {
+                    "type": "string",
+                    "example": "High"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "TO-DO"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "GoLang project: Task Manager"
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "example": "2024-03-26T12:49:539.000Z"
+                },
+                "updatedBy": {
+                    "type": "integer",
+                    "example": 974751326021189896
+                }
+            }
+        },
+        "response.Tasks": {
+            "description": "Send array of tasks to response.",
+            "type": "object",
+            "properties": {
+                "tasks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.Task"
+                    }
+                }
+            }
+        },
+        "response.User": {
+            "description": "User information with id, first name, last name, bio, email, password and profile.",
+            "type": "object",
+            "properties": {
+                "bio": {
+                    "type": "string",
+                    "example": "Junior Software Engineer at ZURU TECH INDIA."
+                },
+                "email": {
+                    "type": "string",
+                    "example": "chiragmakwana@gmail.com"
+                },
+                "firstName": {
+                    "type": "string",
+                    "example": "Chirag"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 974751326021189896
+                },
+                "lastName": {
+                    "type": "string",
+                    "example": "Makwana"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "Chirag123$"
+                },
+                "profile": {
+                    "type": "string",
+                    "example": "Public"
+                }
+            }
+        },
+        "response.UserWithTokens": {
+            "description": "Send user info along with access token and refresh token to response.",
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                },
+                "user": {
+                    "$ref": "#/definitions/response.User"
+                }
+            }
+        },
+        "response.Users": {
+            "description": "Send array of user to response.",
+            "type": "object",
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.User"
+                    }
+                }
+            }
+        }
+    }
+}

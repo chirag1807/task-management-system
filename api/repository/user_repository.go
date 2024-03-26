@@ -13,6 +13,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type UserRepository interface {
@@ -28,12 +29,14 @@ type UserRepository interface {
 type userRepository struct {
 	dbConn      *pgx.Conn
 	redisClient *redis.Client
+	rabbitmqConn *amqp.Connection
 }
 
-func NewUserRepo(dbConn *pgx.Conn, redisClient *redis.Client) UserRepository {
+func NewUserRepo(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn *amqp.Connection) UserRepository {
 	return userRepository{
 		dbConn:      dbConn,
 		redisClient: redisClient,
+		rabbitmqConn: rabbitmqConn,
 	}
 }
 
@@ -121,7 +124,7 @@ func (u userRepository) SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTim
 		tx.Rollback(ctx)
 		return 0, err
 	}
-	err = utils.SendEmail(userEmail)
+	err = utils.ProduceEmail(u.rabbitmqConn, userEmail)
 	if err != nil {
 		tx.Rollback(ctx)
 		return 0, err
@@ -140,6 +143,7 @@ func (u userRepository) VerifyOTP(otpFromUser request.OTP) error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 	if rows.Next() {
 		if err := rows.Scan(&dbOTP.ID, &dbOTP.OTP, &dbOTP.OTPExpiryTime); err != nil {
 			fmt.Println(err)

@@ -7,7 +7,7 @@ import (
 )
 
 type TeamService interface {
-	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) error
+	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error)
 	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error
 	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error
 	GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error)
@@ -25,7 +25,7 @@ func NewTeamService(teamRepository repository.TeamRepository) TeamService {
 	}
 }
 
-func (t teamService) CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) error {
+func (t teamService) CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error) {
 	return t.teamRepository.CreateTeam(teamToCreate, teamMembers)
 }
 

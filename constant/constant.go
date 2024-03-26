@@ -24,6 +24,7 @@ const (
 	LEFT_TEAM                 = "Team Left Successfully."
 	TASK_CREATED              = "Task Created Successfully."
 	TASK_UPDATED              = "Task Updated Successfully."
+	USER_MAIL_QUEUE           = "user-mail-queue"
 )
 
 type contextKey string
@@ -34,7 +35,7 @@ var (
 	SocketServerKey = contextKey("socketServer")
 )
 
-// below I have declared keys for body, quer params and url params validations.
+// below I have declared keys for body, query params and url params validations.
 const (
 	// For User Model
 	IdKey        = "id"

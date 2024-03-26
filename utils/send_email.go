@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"bytes"
-	"html/template"
 	"log"
 	"net/smtp"
 	"strconv"
@@ -41,18 +39,6 @@ func SendEmail(email dto.Email) error {
 	}
 	log.Println("Email Sent Succesfully.")
 	return nil
-}
-
-func ParseTemplate(fileName string, data interface{}) ([]byte, error) {
-	t, err := template.ParseFiles(fileName)
-	if err != nil {
-		return []byte{}, err
-	}
-	buffer := new(bytes.Buffer)
-	if err = t.Execute(buffer, data); err != nil {
-		return []byte{}, err
-	}
-	return buffer.Bytes(), nil
 }
 
 func PrepareEmailBody(OTP int) string {

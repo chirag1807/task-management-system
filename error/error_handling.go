@@ -7,8 +7,8 @@ import (
 )
 
 type CustomError struct {
-	StatusCode   int
-	ErrorMessage string
+	StatusCode   int    `example:"000"`
+	ErrorMessage string `example:"Corresponding Error Message will Show Here"`
 }
 
 // here I implemented error interface's Error() method.

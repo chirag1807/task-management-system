@@ -15,10 +15,12 @@ import (
 	"github.com/go-redis/redis/v8"
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/jackc/pgx/v5"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 var dbConn *pgx.Conn
 var redisClient *redis.Client
+var rabbitmqConn *amqp.Connection
 var r *chi.Mux
 var socketServer *socketio.Server
 var authService service.AuthService
@@ -28,7 +30,7 @@ var userService service.UserService
 
 func init() {
 	config.LoadConfig("../../.config/", "../../.config/secret.json")
-	dbConn, redisClient, _ = db.SetDBConection(1)
+	dbConn, redisClient, rabbitmqConn = db.SetDBConection(1)
 	socketServer = socket.SocketConnection()
 	r = chi.NewRouter()
 
@@ -41,7 +43,7 @@ func init() {
 	teamRepository := repository.NewTeamRepo(dbConn, redisClient)
 	teamService = service.NewTeamService(teamRepository)
 
-	userRepository := repository.NewUserRepo(dbConn, redisClient)
+	userRepository := repository.NewUserRepo(dbConn, redisClient, rabbitmqConn)
 	userService = service.NewUserService(userRepository)
 }
 

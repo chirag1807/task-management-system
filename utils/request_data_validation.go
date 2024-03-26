@@ -12,7 +12,7 @@ func ValidateParameters(r *http.Request, requestBody interface{}, requestParamet
 	queryParametersMap *map[string]string, queryParametersFiltersMap *map[string]string, urlParamsError *[]response.InvalidParameters) (error, error) {
 
 	var invalidParamErr []response.InvalidParameters
-	var invalidParamKeysArr []string
+	// var invalidParamKeysArr []string
 
 	if urlParamsError != nil {
 		invalidParamErr = append(invalidParamErr, *urlParamsError...)
@@ -36,7 +36,7 @@ func ValidateParameters(r *http.Request, requestBody interface{}, requestParamet
 		for key := range queryParameterMapDereference {
 			if len(queryParamData.Errors.FieldOne(key)) != 0 {
 				invalidParamErr = append(invalidParamErr, response.InvalidParameters{ParameterName: key, ErrorMessage: queryParamData.Errors.FieldOne(key)})
-				invalidParamKeysArr = append(invalidParamKeysArr, key)
+				// invalidParamKeysArr = append(invalidParamKeysArr, key)
 			}
 		}
 	}
@@ -76,7 +76,7 @@ func ValidateParameters(r *http.Request, requestBody interface{}, requestParamet
 		for key := range requestParametersMapDereference {
 			if len(requestBodyData.Errors.FieldOne(key)) != 0 {
 				invalidParamErr = append(invalidParamErr, response.InvalidParameters{ParameterName: key, ErrorMessage: requestBodyData.Errors.FieldOne(key)})
-				invalidParamKeysArr = append(invalidParamKeysArr, key)
+				// invalidParamKeysArr = append(invalidParamKeysArr, key)
 			}
 		}
 	}
@@ -103,27 +103,4 @@ func ValidateParameters(r *http.Request, requestBody interface{}, requestParamet
 		return nil, invalidParamsMultiLineErrMsg
 	}
 
-}
-
-func CreateCustomErrorMs(w http.ResponseWriter, r *http.Request) *validate.Validation {
-	requestParameterData, err := validate.FromRequest(r)
-	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
-	}
-
-	requestBodyData := requestParameterData.Create()
-	requestBodyData.WithMessages(map[string]string{
-		"string":   "{field} must be string only.",
-		"int":      "{field} must be integer only.",
-		"number":   "{field} must be number only.",
-		"slice":    "{field} must be an array only.",
-		"required": "{field} is required to not be empty.",
-		"minLen":   "{field} violates minimum length constraint.",
-		"maxLen":   "{field} violates maximum length constraint.",
-		"min":      "{field} violates minimum value constraint.",
-		"max":      "{field} violates maximum value constraint.",
-		"regex":    "please provide {field} in valid format.",
-	})
-
-	return requestBodyData
 }

@@ -11,9 +11,10 @@ import (
 	"github.com/go-redis/redis/v8"
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/jackc/pgx/v5"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, socketServer *socketio.Server) *chi.Mux {
+func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn *amqp.Connection, socketServer *socketio.Server) *chi.Mux {
 	router := chi.NewRouter()
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://*"},
@@ -35,7 +36,7 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, socketServer 
 	teamService := service.NewTeamService(teamRepository)
 	teamController := controller.NewTeamController(teamService)
 
-	userRepository := repository.NewUserRepo(dbConn, redisClient)
+	userRepository := repository.NewUserRepo(dbConn, redisClient, rabbitmqConn)
 	userService := service.NewUserService(userRepository)
 	userController := controller.NewUserController(userService)
 
@@ -47,10 +48,8 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, socketServer 
 
 	router.Route("/api/task", func(r chi.Router) {
 		r.Use(middleware.VerifyToken(0))
-		r.Group(func(r chi.Router) {
-			r.Post("/create-task", taskController.CreateTask)
-			r.Put("/update-task", taskController.UpdateTask)
-		})
+		r.Post("/create-task", taskController.CreateTask)
+		r.Put("/update-task", taskController.UpdateTask)
 		r.Get("/get-all-tasks/{Flag}", taskController.GetAllTasks)
 		r.Get("/get-tasks-of-team/{TeamID}", taskController.GetTasksofTeam)
 	})

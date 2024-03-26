@@ -36,6 +36,20 @@ func NewUserController(userService service.UserService) UserController {
 	}
 }
 
+// GetAllPublicProfileUsers fetches all public profile users.
+// @Summary Get all public profile users
+// @Description Get all public profile users based on query parameters
+// @Produce json
+// @Tags users
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Param Limit query int false "Number of users to return per page (default 10)"
+// @Param Offset query int false "Offset for pagination (default 0)"
+// @Param Search query string false "Search term to filter users"
+// @Success 200 {object} response.Users "Public profile users fetched successfully"
+// @Failure 400 {object} errorhandling.CustomError "Bad request"
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/user/get-public-profile-users [get]
 func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
 		constant.LimitKey:          "number|default:10",
@@ -71,6 +85,18 @@ func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// GetMyDetails fetches details of the authenticated user.
+// @Summary Get details of the authenticated user
+// @Description Get details of the authenticated user based on the authenticated user ID provided via token.
+// @Produce json
+// @Tags users
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Success 200 {object} response.User "Successful response"
+// @Failure 400 {object} errorhandling.CustomError "Bad request"
+// @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/user/get-my-details [get]
+// /get-my-details
 func (u userController) GetMyDetails(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	userDetails, err := u.userService.GetMyDetails(userId)
@@ -81,6 +107,26 @@ func (u userController) GetMyDetails(w http.ResponseWriter, r *http.Request) {
 	utils.SendSuccessResponse(w, http.StatusOK, userDetails)
 }
 
+// UpdateUserProfile updates a user's profile.
+// @Summary Update User Profile
+// @Description UpdateUserProfile API is made for updating a user's profile.
+// @Accept json
+// @Produce json
+// @Tags users
+// @Param Authorization header string true "Access Token" default(Bearer <access_token>)
+// @Param firstName formData string false "First name of the user"
+// @Param lastName formData string false "Last name of the user"
+// @Param bio formData string false "Bio of the user"
+// @Param email formData string false "Email of the user"
+// @Param password formData string false "Password of the user"
+// @Param profile formData string false "Profile of the user (Public, Private)"
+// @Success 200 {object} response.SuccessResponse "User Updated successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request."
+// @Failure 401 {object} errorhandling.CustomError "Either password not matched or need to left from all teams or token expired."
+// @Failure 404 {object} errorhandling.CustomError "No user found."
+// @Failure 409 {object} errorhandling.CustomError "Duplicate email found."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/user/update-user-profile [put]
 func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.FirstNameKey: "string|minLen:2",
@@ -141,15 +187,27 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 	response := response.SuccessResponse{
 		Message: constant.USER_PROFILE_UPDATED,
 	}
+	log.Println(constant.USER_PROFILE_UPDATED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// SendOTPToUser sends an otp to user's email address.
+// @Summary Sends an OTP
+// @Description SendOTPToUser API is made for sending an otp to user's email address.
+// @Accept json
+// @Produce json
+// @Tags users
+// @Param email formData string true "Email of the user"
+// @Success 200 {object} response.SuccessResponse "OTP sent successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request."
+// @Failure 404 {object} errorhandling.CustomError "No Email found."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/user/send-otp-to-user [post]
 func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.EmailKey: `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
 	}
 	var user request.User
-
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
@@ -177,12 +235,6 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 	min, max := 1001, 9999
 	OTP := rand.Intn(max-min) + min
 
-	// emailBody, err := utils.ParseTemplate("D:/Task Manager GOLang/utils/email_body.html", map[string]string{"OTP": string(rune(OTP))})
-	// if err != nil {
-	// 	errorhandling.SendErrorResponse(w, err)
-	// 	return
-	// }
-
 	emailBody := utils.PrepareEmailBody(OTP)
 	email := dto.Email{
 		To:      user.Email,
@@ -205,6 +257,20 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// VerifyOTP verifies an otp from user.
+// @Summary Verifies an OTP
+// @Description VerifyOTP API is made for verifying an otp from user.
+// @Accept json
+// @Produce json
+// @Tags users
+// @Param id formData int64 true "ID which you've received in response of SendOTPToUser API"
+// @Param otp formData int true "OTP which user has entered"
+// @Success 200 {object} response.SuccessResponse "OTP Verifies successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request."
+// @Failure 401 {object} errorhandling.CustomError "OTP not matched."
+// @Failure 403 {object} errorhandling.CustomError "OTP verification time expired."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/user/verify-otp [post]
 func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.OTPIdKey:   "number|required",
@@ -247,6 +313,18 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
+// ResetUserPassword reset user's password to our database.
+// @Summary reset user password
+// @Description ResetUserPassword API is made for reset user password.
+// @Accept json
+// @Produce json
+// @Tags users
+// @Param email formData string true "Email of the user"
+// @Param password formData string true "New password of the user"
+// @Success 200 {object} response.SuccessResponse "Password reset done successfully."
+// @Failure 400 {object} errorhandling.CustomError "Bad request."
+// @Failure 500 {object} errorhandling.CustomError "Internal server error."
+// @Router /api/user/reset-user-password [put]
 func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.EmailKey:     `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,

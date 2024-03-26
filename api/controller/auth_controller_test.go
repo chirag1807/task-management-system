@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/chirag1807/task-management-system/api/model/dto"
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/constant"
 	"github.com/stretchr/testify/assert"
@@ -129,9 +128,6 @@ func TestUserRegistration(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, req)
-			var response dto.ExpectedMessage
-			json.Unmarshal(w.Body.Bytes(), &response)
-
 			assert.Equal(t, v.StatusCode, w.Code)
 		})
 	}
@@ -195,10 +191,6 @@ func TestUserLogin(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, req)
-
-			var response dto.ExpectedMessage
-			json.Unmarshal(w.Body.Bytes(), &response)
-
 			assert.Equal(t, v.StatusCode, w.Code)
 		})
 	}
@@ -231,11 +223,6 @@ func TestResetToken(t *testing.T) {
 			req = req.WithContext(ctx)
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, req)
-
-			var response dto.ExpectedMessage
-			json.Unmarshal(w.Body.Bytes(), &response)
-
-			log.Println(v.StatusCode, w.Code)
 			assert.Equal(t, v.StatusCode, w.Code)
 		})
 	}
