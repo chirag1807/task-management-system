@@ -466,6 +466,122 @@
                 }
             }
         },
+        "/api/task/get-team-members/{TeamID}": {
+            "get": {
+                "description": "Get all members of team based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Get all team members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of team whose members you want.",
+                        "name": "TeamID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of tasks to return per page (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Team members fetched successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.TeamMemberDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/task/left-team/{TeamID}": {
+            "delete": {
+                "description": "Removes user from particular team",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Left Team",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of team whose members you want.",
+                        "name": "TeamID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Team left successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired or you are not a member of that team.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
         "/api/task/update-task": {
             "put": {
                 "description": "Update a task based on provided parameters",
@@ -578,7 +694,7 @@
                 }
             }
         },
-        "/api/teams/add-members-to-team": {
+        "/api/team/add-members-to-team": {
             "put": {
                 "description": "Add members to a team based on provided parameters",
                 "consumes": [
@@ -655,7 +771,192 @@
                 }
             }
         },
-        "/api/teams/remove-members-from-team": {
+        "/api/team/create-team": {
+            "post": {
+                "description": "CreateTeam API is made for creating a new team in the task manager application.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Create New Team",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "2024-03-25T22:59:59.000Z",
+                        "name": "createdAt",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "example": 954751326021189799,
+                        "name": "createdBy",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "example": 954751326021189633,
+                        "name": "id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "example": "Team Jupiter",
+                        "name": "name",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "example": "Public",
+                        "name": "teamProfile",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "multi",
+                        "example": [
+                            954751326021189800,
+                            954751326021189801
+                        ],
+                        "name": "memberID",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "integer",
+                        "example": 954751326021189633,
+                        "name": "teamID",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Team created successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/team/get-all-teams/{Flag}": {
+            "get": {
+                "description": "Get all teams of user based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Get all teams",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Flag indicating 0 means teams created by user and 1 means teams in which user were added.",
+                        "name": "Flag",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of tasks to return per page (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term to filter tasks",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Sort tasks by create time (true for ascending, false for descending)",
+                        "name": "sortByCreatedAt",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Teams fetched successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Teams"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "422": {
+                        "description": "Provide valid flag",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/team/remove-members-from-team": {
             "put": {
                 "description": "Remove members from a team based on provided parameters",
                 "consumes": [
@@ -1204,6 +1505,79 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/response.Task"
+                    }
+                }
+            }
+        },
+        "response.Team": {
+            "description": "Team information with it's id, name, profile (Public or Private), id of user who created it, time when it was created and team members.",
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string",
+                    "example": "2024-03-25T22:59:59.000Z"
+                },
+                "createdBy": {
+                    "type": "integer",
+                    "example": 954751326021189799
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 954751326021189633
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Team Jupiter"
+                },
+                "teamMembers": {
+                    "$ref": "#/definitions/response.TeamMembers"
+                },
+                "teamProfile": {
+                    "type": "string",
+                    "example": "Public"
+                }
+            }
+        },
+        "response.TeamMemberDetails": {
+            "description": "Send array of user to response as team members.",
+            "type": "object",
+            "properties": {
+                "teamMembers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.User"
+                    }
+                }
+            }
+        },
+        "response.TeamMembers": {
+            "description": "Send team's id and it's all members id to the response.",
+            "type": "object",
+            "properties": {
+                "memberID": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        954751326021189800,
+                        954751326021189801
+                    ]
+                },
+                "teamID": {
+                    "type": "integer",
+                    "example": 954751326021189633
+                }
+            }
+        },
+        "response.Teams": {
+            "description": "Send array of team to response.",
+            "type": "object",
+            "properties": {
+                "team": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.Team"
                     }
                 }
             }

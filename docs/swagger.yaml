@@ -76,6 +76,58 @@ definitions:
           $ref: '#/definitions/response.Task'
         type: array
     type: object
+  response.Team:
+    description: Team information with it's id, name, profile (Public or Private),
+      id of user who created it, time when it was created and team members.
+    properties:
+      createdAt:
+        example: "2024-03-25T22:59:59.000Z"
+        type: string
+      createdBy:
+        example: 954751326021189799
+        type: integer
+      id:
+        example: 954751326021189633
+        type: integer
+      name:
+        example: Team Jupiter
+        type: string
+      teamMembers:
+        $ref: '#/definitions/response.TeamMembers'
+      teamProfile:
+        example: Public
+        type: string
+    type: object
+  response.TeamMemberDetails:
+    description: Send array of user to response as team members.
+    properties:
+      teamMembers:
+        items:
+          $ref: '#/definitions/response.User'
+        type: array
+    type: object
+  response.TeamMembers:
+    description: Send team's id and it's all members id to the response.
+    properties:
+      memberID:
+        example:
+        - 954751326021189800
+        - 954751326021189801
+        items:
+          type: integer
+        type: array
+      teamID:
+        example: 954751326021189633
+        type: integer
+    type: object
+  response.Teams:
+    description: Send array of team to response.
+    properties:
+      team:
+        items:
+          $ref: '#/definitions/response.Team'
+        type: array
+    type: object
   response.User:
     description: User information with id, first name, last name, bio, email, password
       and profile.
@@ -441,6 +493,85 @@ paths:
       summary: Get all tasks of a team
       tags:
       - tasks
+  /api/task/get-team-members/{TeamID}:
+    get:
+      description: Get all members of team based on query parameters
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of team whose members you want.
+        in: path
+        name: TeamID
+        required: true
+        type: integer
+      - description: Number of tasks to return per page (default 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Team members fetched successfully.
+          schema:
+            $ref: '#/definitions/response.TeamMemberDetails'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Get all team members
+      tags:
+      - teams
+  /api/task/left-team/{TeamID}:
+    delete:
+      description: Removes user from particular team
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of team whose members you want.
+        in: path
+        name: TeamID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Team left successfully.
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Either refresh token not found or token is expired or you are
+            not a member of that team.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Left Team
+      tags:
+      - teams
   /api/task/update-task:
     put:
       consumes:
@@ -516,7 +647,7 @@ paths:
       summary: Update a task
       tags:
       - tasks
-  /api/teams/add-members-to-team:
+  /api/team/add-members-to-team:
     put:
       consumes:
       - application/json
@@ -568,7 +699,133 @@ paths:
       summary: Add members to a team
       tags:
       - teams
-  /api/teams/remove-members-from-team:
+  /api/team/create-team:
+    post:
+      consumes:
+      - application/json
+      description: CreateTeam API is made for creating a new team in the task manager
+        application.
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - example: "2024-03-25T22:59:59.000Z"
+        in: formData
+        name: createdAt
+        type: string
+      - example: 954751326021189799
+        in: formData
+        name: createdBy
+        type: integer
+      - example: 954751326021189633
+        in: formData
+        name: id
+        type: integer
+      - example: Team Jupiter
+        in: formData
+        name: name
+        type: string
+      - example: Public
+        in: formData
+        name: teamProfile
+        type: string
+      - collectionFormat: multi
+        example:
+        - 954751326021189800
+        - 954751326021189801
+        in: formData
+        items:
+          type: integer
+        name: memberID
+        type: array
+      - example: 954751326021189633
+        in: formData
+        name: teamID
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Team created successfully.
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Create New Team
+      tags:
+      - teams
+  /api/team/get-all-teams/{Flag}:
+    get:
+      description: Get all teams of user based on query parameters
+      parameters:
+      - default: Bearer <access_token>
+        description: Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Flag indicating 0 means teams created by user and 1 means teams
+          in which user were added.
+        in: path
+        name: Flag
+        required: true
+        type: integer
+      - description: Number of tasks to return per page (default 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination (default 0)
+        in: query
+        name: offset
+        type: integer
+      - description: Search term to filter tasks
+        in: query
+        name: search
+        type: string
+      - description: Sort tasks by create time (true for ascending, false for descending)
+        in: query
+        name: sortByCreatedAt
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Teams fetched successfully.
+          schema:
+            $ref: '#/definitions/response.Teams'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "401":
+          description: Either refresh token not found or token is expired.
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "422":
+          description: Provide valid flag
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errorhandling.CustomError'
+      summary: Get all teams
+      tags:
+      - teams
+  /api/team/remove-members-from-team:
     put:
       consumes:
       - application/json

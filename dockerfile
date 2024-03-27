@@ -10,6 +10,4 @@ RUN go build -o cmd/main ./cmd
 
 WORKDIR /app/cmd
 
-EXPOSE 9090
-
 CMD [ "/app/cmd/main" ]

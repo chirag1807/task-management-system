@@ -47,9 +47,9 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, *amqp.Connection) {
 }
 
 func dbConnString() string {
-	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@127.0.0.1:" + config.Config.Database.Port + "/" + config.Config.Database.Name + "?sslmode=" + config.Config.Database.SSLMode
+	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@cockroachdb:" + config.Config.Database.Port + "/" + config.Config.Database.Name + "?sslmode=" + config.Config.Database.SSLMode
 }
 
 func testDbConnString() string {
-	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@127.0.0.1:" + config.Config.Database.Port + "/" + config.Config.Database.TestDatabaseName + "?sslmode=" + config.Config.Database.SSLMode
+	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@cockroachdb:" + config.Config.Database.Port + "/" + config.Config.Database.TestDatabaseName + "?sslmode=" + config.Config.Database.SSLMode
 }

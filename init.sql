@@ -1,4 +1,7 @@
--- migrate:up
+CREATE DATABASE IF NOT EXISTS taskmanager;
+
+USE taskmanager;
+
 CREATE TYPE userprofile AS ENUM ('Public', 'Private');
 
 CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, first_name VARCHAR(255) NOT NULL, last_name VARCHAR(255) NOT NULL, bio VARCHAR(255) NOT NULL,
@@ -33,15 +36,3 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 CREATE INDEX IF NOT EXISTS index_fetch_tasks ON tasks (title, description, status);
-
--- migrate:down
-DROP TABLE IF EXISTS tasks;
-DROP TABLE IF EXISTS team_members;
-DROP TABLE IF EXISTS teams;
-DROP TYPE IF EXISTS taskstatus;
-DROP TYPE IF EXISTS taskpriority;
-DROP TABLE IF EXISTS refresh_tokens;
-DROP INDEX IF EXISTS index_fetch_tasks;
-DROP TABLE IF EXISTS users;
-DROP TYPE IF EXISTS userprofile;
-DROP TABLE IF EXISTS otps;

@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:    
+  cockroachdb:
+    image: cockroachdb/cockroach:v23.1.14
+    command: start --insecure --listen-addr=localhost:26257 --http-addr=localhost:8080 --join=localhost:26257
+    ports:
+      - "26257:26257" # CockroachDB client connection
+      - "8080:8080"   # CockroachDB admin UI
+    volumes:
+      - cockroach-data:/cockroach/cockroach-data
+      - ./init.sql:/cockroach-init/init.sql
+    environment:
+      - COCKROACH_USER=chirag
+      - COCKROACH_PASSWORD=Chirag12345678
+    networks:
+      - my-network
+
+  redis:
+    image: redis:7.2.4
+    ports:
+      - "6379:6379"
+    networks:
+      - my-network  
+
+  rabbitmq:
+    image: rabbitmq:latest
+    ports:
+      - "5672:5672"
+      - "15672:15672" # Web UI
+    networks:
+      - my-network
+
+  golang-app:
+    build: .
+    depends_on:
+      - cockroachdb
+      - redis
+      - rabbitmq
+    ports:
+      - "9090:9090"
+    environment:
+      - WAIT_HOSTS=cockroachdb:26257,redis:6379,rabbitmq:5672
+    env_file:
+      - .config/.env
+    links:
+      - cockroachdb
+      - redis
+      - rabbitmq
+    volumes:
+      - .config/.env:/usr/bin/.config/.env
+    networks:
+      - my-network
+
+volumes:
+  cockroach-data:
+    driver: local
+networks:
+  my-network:
+    driver: bridge

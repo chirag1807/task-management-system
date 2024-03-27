@@ -43,7 +43,7 @@ func NewTeamController(teamService service.TeamService) TeamController {
 // @Produce json
 // @Tags teams
 // @Param Authorization header string true "Access Token" default(Bearer <access_token>)
-// @Param teamDetails formData request.TeamDetails true "Team name and profile"
+// @Param teamDetails formData request.Team true "Team name and profile"
 // @Param teamMembers formData request.TeamMembers true "Ids of user who will be added to the team."
 // @Success 200 {object} response.SuccessResponse "Team created successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request"

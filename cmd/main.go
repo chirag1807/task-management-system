@@ -27,6 +27,7 @@ func main() {
 	defer dbConn.Close(context.Background())
 
 	socketServer := socket.SocketConnection()
+	log.Println("yes coming...1")
 	port := fmt.Sprintf(":%d", config.Config.Port)
 
 	docs.SwaggerInfo.Title = "Task Manager API Documentation"
@@ -44,6 +45,8 @@ func main() {
 		Handler:     r,
 		IdleTimeout: 2 * time.Minute,
 	}
+
+	log.Println("yes coming...2")
 
 	go func() {
 		if err := socketServer.Serve(); err != nil {
