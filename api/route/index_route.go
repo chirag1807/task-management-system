@@ -24,7 +24,7 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn 
 	socket.SocketEvents(socketServer)
 	router.Handle("/socket.io/", c.Handler(socketServer))
 
-	authRepository := repository.NewAuthRepo(dbConn, redisClient)
+	authRepository := repository.NewAuthRepo(dbConn)
 	authService := service.NewAuthService(authRepository)
 	authController := controller.NewAuthController(authService)
 
@@ -36,7 +36,7 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn 
 	teamService := service.NewTeamService(teamRepository)
 	teamController := controller.NewTeamController(teamService)
 
-	userRepository := repository.NewUserRepo(dbConn, redisClient, rabbitmqConn)
+	userRepository := repository.NewUserRepo(dbConn, rabbitmqConn)
 	userService := service.NewUserService(userRepository)
 	userController := controller.NewUserController(userService)
 

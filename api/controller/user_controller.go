@@ -68,7 +68,6 @@ func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -139,12 +138,10 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 	var userToUpdate request.User
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userToUpdate, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -208,12 +205,12 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 		constant.EmailKey: `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
 	}
 	var user request.User
+
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil)
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -283,7 +280,6 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -333,12 +329,10 @@ func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request
 	var userEmailPassword request.User
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userEmailPassword, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return

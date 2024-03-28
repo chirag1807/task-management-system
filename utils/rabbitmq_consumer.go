@@ -9,6 +9,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+// ConsumeUserMail function make use of rabbitmq and consume messgae from default queue.
 func ConsumeUserMail(rabbitmqConn *amqp.Connection) {
 	ch, err := rabbitmqConn.Channel()
 	if err != nil {

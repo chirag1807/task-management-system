@@ -14,7 +14,7 @@ import (
 // Here it takes token expire time and user id and add them to token as claims.
 func CreateJWTToken(tokenExpiryTime time.Time, userId int64) (string, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userId": strconv.FormatInt(954488202459119617, 10),
+		"userId": strconv.FormatInt(userId, 10),
 		"exp":    tokenExpiryTime.Unix(),
 	})
 

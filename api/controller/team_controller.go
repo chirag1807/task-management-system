@@ -60,12 +60,10 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	var team request.CreateTeam
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &team, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -129,12 +127,10 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 	var teamMembersToAdd request.TeamMembers
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamMembersToAdd, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -189,12 +185,10 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 	var teamMembersToRemove request.TeamMembers
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamMembersToRemove, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -263,7 +257,6 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -325,7 +318,6 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return

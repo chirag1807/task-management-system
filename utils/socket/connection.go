@@ -11,8 +11,8 @@ import (
 	"github.com/googollee/go-socket.io/engineio/transport/websocket"
 )
 
+// SocketConnection provide instance of socket server.
 func SocketConnection() *socketio.Server {
-
 	socketServer := socketio.NewServer(&engineio.Options{
 		Transports: []transport.Transport{
 			&polling.Transport{

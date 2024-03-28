@@ -29,7 +29,7 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, *amqp.Connection) {
 	}
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     config.Config.Redis.Port,
+		Addr:     config.Config.Redis.Host + ":" + config.Config.Redis.Port,
 		Password: config.Config.Redis.Password,
 		DB:       config.Config.Redis.DB,
 	})
@@ -38,7 +38,7 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, *amqp.Connection) {
 		log.Fatal(err)
 	}
 
-	rabbitmqConn, err := amqp.Dial("amqp://" + config.Config.RabbitMQ.Username + ":" + config.Config.RabbitMQ.Password + "@localhost:" + config.Config.RabbitMQ.Port + "/")
+	rabbitmqConn, err := amqp.Dial("amqp://" + config.Config.RabbitMQ.Username + ":" + config.Config.RabbitMQ.Password + "@" + config.Config.RabbitMQ.Host + ":" + config.Config.RabbitMQ.Port + "/")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,9 +47,9 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, *amqp.Connection) {
 }
 
 func dbConnString() string {
-	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@cockroachdb:" + config.Config.Database.Port + "/" + config.Config.Database.Name + "?sslmode=" + config.Config.Database.SSLMode
+	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@" + config.Config.Database.Host + ":" + config.Config.Database.Port + "/" + config.Config.Database.Name + "?sslmode=" + config.Config.Database.SSLMode
 }
 
 func testDbConnString() string {
-	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@cockroachdb:" + config.Config.Database.Port + "/" + config.Config.Database.TestDatabaseName + "?sslmode=" + config.Config.Database.SSLMode
+	return "postgresql://" + config.Config.Database.Username + ":" + config.Config.Database.Password + "@" + config.Config.Database.Host + ":" + config.Config.Database.Port + "/" + config.Config.Database.TestDatabaseName + "?sslmode=" + config.Config.Database.SSLMode
 }

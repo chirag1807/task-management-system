@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 
@@ -23,11 +22,9 @@ func UpdateQuery(tableName string, model interface{}, id int64, flag int) (strin
 		if !fieldValue.CanInterface() {
 			continue
 		}
-
 		if field.Tag.Get("json") == "id" {
 			continue
 		}
-
 		if fieldValue.Interface() == reflect.Zero(fieldValue.Type()).Interface() {
 			continue
 		}
@@ -46,11 +43,8 @@ func UpdateQuery(tableName string, model interface{}, id int64, flag int) (strin
 			args = append(args, nil)
 		}
 	}
-
 	query = query[:len(query)-1] + " WHERE id = $" + strconv.Itoa(len(args)+1)
 	args = append(args, id)
-
-	fmt.Println(query, args)
 
 	return query, args, nil
 }
@@ -65,7 +59,6 @@ func UpdateTaskFields(dbTask response.Task, requestTask request.Task) response.T
 		fieldName := field.Name
 		dbFieldValue := dbTaskValue.FieldByName(fieldName)
 		requestFieldValue := requestTaskValue.FieldByName(fieldName)
-
 		if requestFieldValue.IsValid() && !reflect.DeepEqual(requestFieldValue.Interface(), reflect.Zero(requestFieldValue.Type()).Interface()) {
 			dbFieldValue.Set(requestFieldValue)
 		}

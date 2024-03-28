@@ -9,7 +9,7 @@ import (
 	"github.com/chirag1807/task-management-system/config"
 )
 
-// SendEmail uses go's built in package net/smtp to send email to given address.
+// SendEmail uses go's built in package net/smtp to send email to given email address.
 func SendEmail(email dto.Email) error {
 	to := []string{
 		email.To,
@@ -34,7 +34,6 @@ func SendEmail(email dto.Email) error {
 		msg,
 	)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	log.Println("Email Sent Succesfully.")

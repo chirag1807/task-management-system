@@ -11,6 +11,7 @@ type Config struct {
 type Database struct {
 	Username         string `mapstructure:"DATABASE_USERNAME"`
 	Password         string `mapstructure:"DATABASE_PASSWORD"`
+	Host             string `mapstructure:"DATABASE_HOST"`
 	Port             string `mapstructure:"DATABASE_PORT"`
 	Name             string `mapstructure:"DATABASE_NAME"`
 	TestDatabaseName string `mapstructure:"TEST_DATABASE_NAME"`
@@ -18,6 +19,7 @@ type Database struct {
 }
 
 type Redis struct {
+	Host     string `mapstructure:"REDIS_HOST"`
 	Port     string `mapstructure:"REDIS_PORT"`
 	Password string `mapstructure:"REDIS_PASSWORD"`
 	DB       int    `mapstructure:"REDIS_DB"`
@@ -26,6 +28,7 @@ type Redis struct {
 type RabbitMQ struct {
 	Username string `mapstructure:"RABBITMQ_USERNAME"`
 	Password string `mapstructure:"RABBITMQ_PASSWORD"`
+	Host     string `mapstructure:"RABBITMQ_HOST"`
 	Port     string `mapstructure:"RABBITMQ_PORT"`
 }
 

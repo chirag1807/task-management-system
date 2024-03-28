@@ -10,7 +10,6 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/response"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
-	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -27,15 +26,13 @@ type UserRepository interface {
 }
 
 type userRepository struct {
-	dbConn      *pgx.Conn
-	redisClient *redis.Client
+	dbConn       *pgx.Conn
 	rabbitmqConn *amqp.Connection
 }
 
-func NewUserRepo(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn *amqp.Connection) UserRepository {
+func NewUserRepo(dbConn *pgx.Conn, rabbitmqConn *amqp.Connection) UserRepository {
 	return userRepository{
-		dbConn:      dbConn,
-		redisClient: redisClient,
+		dbConn:       dbConn,
 		rabbitmqConn: rabbitmqConn,
 	}
 }
@@ -146,7 +143,7 @@ func (u userRepository) VerifyOTP(otpFromUser request.OTP) error {
 	defer rows.Close()
 	if rows.Next() {
 		if err := rows.Scan(&dbOTP.ID, &dbOTP.OTP, &dbOTP.OTPExpiryTime); err != nil {
-			fmt.Println(err)
+			return err
 		}
 		if time.Until(dbOTP.OTPExpiryTime) < 0 {
 			return errorhandling.OTPVerificationTimeExpired

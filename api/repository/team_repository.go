@@ -52,7 +52,6 @@ func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers reques
 	for _, v := range teamMembers.MemberID {
 		batch.Queue(`INSERT INTO team_members (team_id, member_id) VALUES ($1, $2)`, teamId, v)
 	}
-
 	results := tx.SendBatch(ctx, batch)
 	defer results.Close()
 
@@ -60,17 +59,13 @@ func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers reques
 		tx.Rollback(ctx)
 		return teamId, err
 	}
-
 	if err := tx.Commit(ctx); err != nil {
 		tx.Rollback(ctx)
 		return teamId, err
 	}
 
 	for _, v := range teamMembers.MemberID {
-		err = t.redisClient.SAdd(ctx, "user:"+strconv.FormatInt(v, 10)+":teams", teamId).Err()
-		if err != nil {
-			return teamId, err
-		}
+		t.redisClient.SAdd(ctx, "user:"+strconv.FormatInt(v, 10)+":teams", teamId)
 	}
 
 	return teamId, nil
@@ -92,8 +87,6 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	}
 	query = query[:len(query)-2]
 	query += `)`
-
-	fmt.Println(query, args)
 
 	users, err := t.dbConn.Query(context.Background(), query, args...)
 	if err != nil {
@@ -121,7 +114,6 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	for _, v := range teamMembersToAdd.MemberID {
 		batch.Queue(`INSERT INTO team_members (team_id, member_id) VALUES ($1, $2)`, teamMembersToAdd.TeamID, v)
 	}
-
 	results := tx.SendBatch(ctx, batch)
 	defer results.Close()
 
@@ -133,7 +125,6 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 		}
 		return err
 	}
-
 	if err := tx.Commit(ctx); err != nil {
 		tx.Rollback(ctx)
 		pgErr, ok := err.(*pgconn.PgError)
@@ -144,10 +135,7 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	}
 
 	for _, v := range teamMembersToAdd.MemberID {
-		err = t.redisClient.SAdd(ctx, "user:"+strconv.FormatInt(v, 10)+":teams", teamMembersToAdd.TeamID).Err()
-		if err != nil {
-			return err
-		}
+		t.redisClient.SAdd(ctx, "user:"+strconv.FormatInt(v, 10)+":teams", teamMembersToAdd.TeamID)
 	}
 
 	return nil
@@ -176,10 +164,7 @@ func (t teamRepository) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersTo
 	}
 
 	for _, v := range teamMembersToRemove.MemberID {
-		err = t.redisClient.SRem(context.Background(), "user:"+strconv.FormatInt(v, 10)+":teams", teamMembersToRemove.TeamID).Err()
-		if err != nil {
-			return err
-		}
+		t.redisClient.SRem(context.Background(), "user:"+strconv.FormatInt(v, 10)+":teams", teamMembersToRemove.TeamID)
 	}
 
 	return nil
@@ -257,7 +242,6 @@ func CreateQueryForParamsOfGetTeam(query string, queryParams request.TeamQueryPa
 }
 
 func (t teamRepository) LeftTeam(userID int64, teamID int64) error {
-	fmt.Println(teamID, userID)
 	a, err := t.dbConn.Exec(context.Background(), "DELETE FROM team_members WHERE member_id = $1 AND team_id = $2", userID, teamID)
 	if a.RowsAffected() == 0 {
 		return errorhandling.NotAMember
@@ -265,9 +249,6 @@ func (t teamRepository) LeftTeam(userID int64, teamID int64) error {
 	if err != nil {
 		return err
 	}
-	err = t.redisClient.SRem(context.Background(), "user:"+strconv.FormatInt(userID, 10)+":teams", teamID).Err()
-	if err != nil {
-		return err
-	}
+	t.redisClient.SRem(context.Background(), "user:"+strconv.FormatInt(userID, 10)+":teams", teamID)
 	return nil
 }

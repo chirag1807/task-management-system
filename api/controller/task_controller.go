@@ -67,12 +67,10 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	var taskToCreate request.Task
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskToCreate, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -147,7 +145,6 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -217,7 +214,6 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -279,12 +275,10 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	var taskToUpdate request.Task
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskToUpdate, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return

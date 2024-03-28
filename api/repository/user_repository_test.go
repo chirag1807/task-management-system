@@ -32,7 +32,7 @@ func TestGetAllPublicProfileUsers(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			_, err := NewUserRepo(dbConn, redisClient, rabbitmqConn).GetAllPublicProfileUsers(v.QueryParams)
+			_, err := NewUserRepo(dbConn, rabbitmqConn).GetAllPublicProfileUsers(v.QueryParams)
 			assert.Equal(t, v.Expected, err)
 		})
 	}
@@ -61,7 +61,7 @@ func TestGetMyDetails(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			_, err := NewUserRepo(dbConn, redisClient, rabbitmqConn).GetMyDetails(v.UserID)
+			_, err := NewUserRepo(dbConn, rabbitmqConn).GetMyDetails(v.UserID)
 			assert.Equal(t, v.Expected, err)
 		})
 	}
@@ -112,7 +112,7 @@ func TestUpdateUserProfile(t *testing.T) {
 				Email:     v.Email,
 				Profile:   v.Profile,
 			}
-			err := NewUserRepo(dbConn, redisClient, rabbitmqConn).UpdateUserProfile(v.UserID, userToUpdate)
+			err := NewUserRepo(dbConn, rabbitmqConn).UpdateUserProfile(v.UserID, userToUpdate)
 			assert.Equal(t, v.Expected, err)
 		})
 	}
@@ -150,7 +150,7 @@ func TestSendOTPToUser(t *testing.T) {
 				Subject: "OTP Verification",
 				Body:    emailBody,
 			}
-			_, err := NewUserRepo(dbConn, redisClient, rabbitmqConn).SendOTPToUser(email, 4099, time.Now().Add(5*time.Minute))
+			_, err := NewUserRepo(dbConn, rabbitmqConn).SendOTPToUser(email, 4099, time.Now().Add(5*time.Minute))
 			assert.Equal(t, v.Expected, err)
 		})
 	}
@@ -186,7 +186,7 @@ func TestVerifyOTP(t *testing.T) {
 				ID:  v.ID,
 				OTP: v.OTP,
 			}
-			err := NewUserRepo(dbConn, redisClient, rabbitmqConn).VerifyOTP(otpFromUser)
+			err := NewUserRepo(dbConn, rabbitmqConn).VerifyOTP(otpFromUser)
 			assert.Equal(t, v.Expected, err)
 		})
 	}
@@ -215,7 +215,7 @@ func TestResetUserPassword(t *testing.T) {
 				Email: v.Email,
 				Password: v.Password,
 			}
-			err := NewUserRepo(dbConn, redisClient, rabbitmqConn).ResetUserPassword(userEmailPassword)
+			err := NewUserRepo(dbConn, rabbitmqConn).ResetUserPassword(userEmailPassword)
 			assert.Equal(t, v.Expected, err)
 		})
 	}

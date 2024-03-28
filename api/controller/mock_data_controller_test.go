@@ -34,7 +34,7 @@ func init() {
 	socketServer = socket.SocketConnection()
 	r = chi.NewRouter()
 
-	authRepository := repository.NewAuthRepo(dbConn, redisClient)
+	authRepository := repository.NewAuthRepo(dbConn)
 	authService = service.NewAuthService(authRepository)
 
 	taskRepository := repository.NewTaskRepo(dbConn, redisClient, socketServer)
@@ -43,7 +43,7 @@ func init() {
 	teamRepository := repository.NewTeamRepo(dbConn, redisClient)
 	teamService = service.NewTeamService(teamRepository)
 
-	userRepository := repository.NewUserRepo(dbConn, redisClient, rabbitmqConn)
+	userRepository := repository.NewUserRepo(dbConn, rabbitmqConn)
 	userService = service.NewUserService(userRepository)
 }
 

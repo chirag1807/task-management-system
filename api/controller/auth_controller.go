@@ -60,12 +60,10 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 	var userRequest request.User
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userRequest, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -127,12 +125,10 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 	var userLoginRequest request.User
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userLoginRequest, &requestParams, nil, nil, nil, nil)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return
 	}
-
 	if invalidParamsMultiLineErrMsg != nil {
 		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
 		return
@@ -154,7 +150,6 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 	var user response.User
 	var refreshToken string
 	user, refreshToken, err = a.authService.UserLogin(userLoginRequest)
-
 	if err != nil {
 		errorhandling.SendErrorResponse(w, err)
 		return

@@ -63,10 +63,7 @@ func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 	}
 
 	taskToCreate.ID = taskID
-	taskJSON, err := json.Marshal(taskToCreate)
-	if err != nil {
-		return 0, err
-	}
+	taskJSON, _ := json.Marshal(taskToCreate)
 	err = t.redisClient.Set(context.Background(), "tasks:"+strconv.FormatInt(taskID, 10), taskJSON, 0).Err()
 	if err != nil {
 		return 0, err
@@ -102,20 +99,14 @@ func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 
 func (t taskRepository) GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error) {
 	var tasks pgx.Rows
+	var err error
 	tasksSlice := make([]response.Task, 0)
 	var query string
 
 	if flag == 0 {
-		taskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:created_by:"+strconv.FormatInt(userId, 10)).Result()
-		if err != nil {
-			return nil, err
-		}
-		tasksSlice, err = GetTasksFromRedisByIDList(t.redisClient, taskIDs)
-		if err != nil {
-			return nil, err
-		}
+		taskIDs, _ := t.redisClient.SMembers(context.Background(), "tasks:created_by:"+strconv.FormatInt(userId, 10)).Result()
+		tasksSlice, _ = GetTasksFromRedisByIDList(t.redisClient, taskIDs)
 		if len(tasksSlice) != 0 {
-			fmt.Println(tasksSlice)
 			return tasksSlice, nil
 		} else {
 			query = `SELECT * FROM tasks WHERE created_by = $1 AND true`
@@ -127,22 +118,12 @@ func (t taskRepository) GetAllTasks(userId int64, flag int, queryParams request.
 		}
 	}
 	if flag == 1 {
-		taskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_user:"+strconv.FormatInt(userId, 10)).Result()
-		if err != nil {
-			return nil, err
-		}
-		userTeams, err := t.redisClient.SMembers(context.Background(), "user:"+strconv.FormatInt(userId, 10)+":teams").Result()
-		if err != nil {
-			return nil, err
-		}
+		taskIDs, _ := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_user:"+strconv.FormatInt(userId, 10)).Result()
+		userTeams, _ := t.redisClient.SMembers(context.Background(), "user:"+strconv.FormatInt(userId, 10)+":teams").Result()
 		for _, teamID := range userTeams {
-			teamTaskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_team:"+teamID).Result()
-			if err != nil {
-				return nil, err
-			}
+			teamTaskIDs, _ := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_team:"+teamID).Result()
 			taskIDs = append(taskIDs, teamTaskIDs...)
 		}
-		fmt.Println(taskIDs)
 		tasksSlice, err = GetTasksFromRedisByIDList(t.redisClient, taskIDs)
 		if err != nil {
 			return nil, err
@@ -174,14 +155,8 @@ func (t taskRepository) GetAllTasks(userId int64, flag int, queryParams request.
 }
 
 func (t taskRepository) GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error) {
-	teamTaskIDs, err := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(teamId, 10)).Result()
-	if err != nil {
-		return nil, err
-	}
-	tasksSlice, err := GetTasksFromRedisByIDList(t.redisClient, teamTaskIDs)
-	if err != nil {
-		return nil, err
-	}
+	teamTaskIDs, _ := t.redisClient.SMembers(context.Background(), "tasks:assigned_to_team:"+strconv.FormatInt(teamId, 10)).Result()
+	tasksSlice, _ := GetTasksFromRedisByIDList(t.redisClient, teamTaskIDs)
 	if len(tasksSlice) != 0 {
 		return tasksSlice, nil
 	}
@@ -224,7 +199,6 @@ func CreateQueryForParamsOfGetTask(query string, queryParams request.TaskQueryPa
 func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
 	var dbTask response.Task
 	task := t.dbConn.QueryRow(context.Background(), `SELECT * FROM tasks WHERE id = $1`, taskToUpdate.ID)
-	fmt.Println(taskToUpdate.ID)
 
 	err := task.Scan(&dbTask.ID, &dbTask.Title, &dbTask.Description, &dbTask.Deadline, &dbTask.AssigneeIndividual, &dbTask.AssigneeTeam, &dbTask.Status,
 		&dbTask.Priority, &dbTask.CreatedBy, &dbTask.CreatedAt, &dbTask.UpdatedBy, &dbTask.UpdatedAt)
@@ -271,10 +245,7 @@ func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
 	if err != nil {
 		return err
 	}
-	err = t.redisClient.Set(context.Background(), "tasks:"+strconv.FormatInt(taskToUpdateinRedis.ID, 10), taskJSON, 0).Err()
-	if err != nil {
-		return err
-	}
+	t.redisClient.Set(context.Background(), "tasks:"+strconv.FormatInt(taskToUpdateinRedis.ID, 10), taskJSON, 0)
 
 	if taskToUpdate.AssigneeIndividual != nil || taskToUpdate.AssigneeTeam != nil {
 		if dbTask.AssigneeTeam != nil {

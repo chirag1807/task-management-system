@@ -3,16 +3,12 @@ version: '3.8'
 services:    
   cockroachdb:
     image: cockroachdb/cockroach:v23.1.14
-    command: start --insecure --listen-addr=localhost:26257 --http-addr=localhost:8080 --join=localhost:26257
+    command: start-single-node --insecure
     ports:
       - "26257:26257" # CockroachDB client connection
       - "8080:8080"   # CockroachDB admin UI
     volumes:
       - cockroach-data:/cockroach/cockroach-data
-      - ./init.sql:/cockroach-init/init.sql
-    environment:
-      - COCKROACH_USER=chirag
-      - COCKROACH_PASSWORD=Chirag12345678
     networks:
       - my-network
 
@@ -31,6 +27,14 @@ services:
     networks:
       - my-network
 
+  # migration:
+  #   image: amacneil/dbmate
+  #   depends_on:
+  #     - cockroachdb
+  #   volumes:
+  #     - ./db/migrations:/db/migrations
+  #   command: ["sh", "-c", "dbmate -d 'cockroach://root@cockroachdb:26257/taskmanager' up"]
+
   golang-app:
     build: .
     depends_on:
@@ -41,6 +45,7 @@ services:
       - "9090:9090"
     environment:
       - WAIT_HOSTS=cockroachdb:26257,redis:6379,rabbitmq:5672
+      - DATABASE_URL=postgresql://root@cockroachdb:26257/taskmanager?sslmode=disable
     env_file:
       - .config/.env
     links:

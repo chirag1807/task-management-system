@@ -8,6 +8,7 @@ import (
 	validate "github.com/guptaaashutosh/go_validate"
 )
 
+// ValidateParameters validates request body and params against speicied criteria. 
 func ValidateParameters(r *http.Request, requestBody interface{}, requestParametersMap *map[string]string, requestParametersFiltersMap *map[string]string,
 	queryParametersMap *map[string]string, queryParametersFiltersMap *map[string]string, urlParamsError *[]response.InvalidParameters) (error, error) {
 

@@ -7,6 +7,7 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 )
 
+// SocketEvents defined various events like connect, disconnect, join and leave room that client will emit.
 func SocketEvents(server *socketio.Server) {
 	server.OnConnect("/", func(c socketio.Conn) error {
 		log.Println("Connection Made Successfully.", c.ID())
@@ -31,6 +32,7 @@ func SocketEvents(server *socketio.Server) {
 	})
 }
 
+// EmitCreateAndUpdateTaskEvents emits create-task and update-task event to either default namespace or specific room.
 func EmitCreateAndUpdateTaskEvents(server *socketio.Server, event string, room string, msg interface{}, flag int) {
 	//flag = 0 => broadcast to individual via id as event and flag = 1 => broadcast to room
 	if flag == 0 {

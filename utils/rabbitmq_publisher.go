@@ -9,6 +9,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+// ProduceEmail function make use of rabbitmq and produce messgae to default queue.
 func ProduceEmail(rabbitmqConn *amqp.Connection, userEmail dto.Email) (error) {
 	ch, err := rabbitmqConn.Channel()
 	if err != nil {

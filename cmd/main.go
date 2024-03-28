@@ -27,7 +27,6 @@ func main() {
 	defer dbConn.Close(context.Background())
 
 	socketServer := socket.SocketConnection()
-	log.Println("yes coming...1")
 	port := fmt.Sprintf(":%d", config.Config.Port)
 
 	docs.SwaggerInfo.Title = "Task Manager API Documentation"
@@ -41,18 +40,15 @@ func main() {
 	r.Mount("/swagger", httpSwagger.WrapHandler)
 
 	srv := &http.Server{
-		Addr:        "localhost" + port,
+		Addr:        port,
 		Handler:     r,
 		IdleTimeout: 2 * time.Minute,
 	}
-
-	log.Println("yes coming...2")
 
 	go func() {
 		if err := socketServer.Serve(); err != nil {
 			log.Fatalf("socketio listen error: %s\n", err)
 		}
-		log.Println("yes")
 		defer socketServer.Close()
 	}()
 

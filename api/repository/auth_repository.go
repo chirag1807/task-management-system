@@ -2,13 +2,13 @@ package repository
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
-	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -20,18 +20,17 @@ type AuthRepository interface {
 }
 
 type authRepository struct {
-	dbConn      *pgx.Conn
-	redisClient *redis.Client
+	dbConn *pgx.Conn
 }
 
-func NewAuthRepo(dbConn *pgx.Conn, redisClient *redis.Client) AuthRepository {
+func NewAuthRepo(dbConn *pgx.Conn) AuthRepository {
 	return authRepository{
-		dbConn:      dbConn,
-		redisClient: redisClient,
+		dbConn: dbConn,
 	}
 }
 
 func (a authRepository) UserRegistration(user request.User) (int64, error) {
+	log.Println(a.dbConn)
 	var userID int64
 	err := a.dbConn.QueryRow(context.Background(), `INSERT INTO users (first_name, last_name, bio, email, password, profile) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, user.FirstName, user.LastName, user.Bio, user.Email, user.Password, user.Profile).Scan(&userID)
 	if err != nil {
@@ -45,6 +44,7 @@ func (a authRepository) UserRegistration(user request.User) (int64, error) {
 }
 
 func (a authRepository) UserLogin(user request.User) (response.User, string, error) {
+	log.Println(a.dbConn)
 	var dbUser response.User
 	row := a.dbConn.QueryRow(context.Background(), `SELECT id, first_name, last_name, bio, email, password, profile FROM users WHERE email = $1`, user.Email)
 	err := row.Scan(&dbUser.ID, &dbUser.FirstName, &dbUser.LastName, &dbUser.Bio, &dbUser.Email, &dbUser.Password, &dbUser.Profile)
@@ -54,7 +54,6 @@ func (a authRepository) UserLogin(user request.User) (response.User, string, err
 	}
 
 	passwordMatched := utils.VerifyPassword(user.Password, dbUser.Password)
-
 	if !passwordMatched {
 		return response.User{}, "", errorhandling.PasswordNotMatched
 	}

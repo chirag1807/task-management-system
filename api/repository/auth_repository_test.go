@@ -56,7 +56,7 @@ func TestUserRegistration(t *testing.T) {
 				Profile:   v.Profile,
 			}
 
-			_, err := NewAuthRepo(dbConn, redisClient).UserRegistration(user)
+			_, err := NewAuthRepo(dbConn).UserRegistration(user)
 			assert.Equal(t, v.Expected, err)
 		})
 	}
@@ -95,7 +95,7 @@ func TestUserLogin(t *testing.T) {
 				Email:    v.Email,
 				Password: v.Password,
 			}
-			_, _, err := NewAuthRepo(dbConn, redisClient).UserLogin(user)
+			_, _, err := NewAuthRepo(dbConn).UserLogin(user)
 
 			assert.Equal(t, v.Expected, err)
 		})
@@ -122,7 +122,7 @@ func TestResetToken(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			_, err := NewAuthRepo(dbConn, redisClient).ResetToken(v.Token)
+			_, err := NewAuthRepo(dbConn).ResetToken(v.Token)
 
 			assert.Equal(t, v.Expected, err)
 		})
