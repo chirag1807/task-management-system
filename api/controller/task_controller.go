@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
+	"github.com/chirag1807/task-management-system/config"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
@@ -68,24 +68,24 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskToCreate, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &taskToCreate)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
@@ -94,7 +94,7 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	taskToCreate.CreatedBy = userId
 	taskId, err := t.taskService.CreateTask(taskToCreate)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
@@ -102,7 +102,7 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 		Message: constant.TASK_CREATED,
 		ID:      &taskId,
 	}
-	log.Println("Task Created Successfully.")
+	config.LoggerInstance.Info(constant.TASK_CREATED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
@@ -142,11 +142,11 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
@@ -154,17 +154,17 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	flag, err := strconv.Atoi(chi.URLParam(r, "Flag"))
 	if err != nil {
 		if strings.Contains(err.Error(), "strconv.Atoi: parsing") {
-			errorhandling.SendErrorResponse(w, errorhandling.ProvideValidFlag)
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidFlag, "")
 			return
 		}
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
 	if flag == 0 || flag == 1 {
 		tasks, err := t.taskService.GetAllTasks(userId, flag, taskQueryParams)
 		if err != nil {
-			errorhandling.SendErrorResponse(w, err)
+			errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 			return
 		}
 		response := response.Tasks{
@@ -172,7 +172,7 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 		}
 		utils.SendSuccessResponse(w, http.StatusOK, response)
 	} else {
-		errorhandling.SendErrorResponse(w, errorhandling.ProvideValidFlag)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidFlag, "")
 	}
 }
 
@@ -211,27 +211,27 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
 	if err != nil {
 		if strings.Contains(err.Error(), "strconv.Atoi: parsing") {
-			errorhandling.SendErrorResponse(w, errorhandling.ProvideValidParams)
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, "")
 			return
 		}
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
 	tasks, err := t.taskService.GetTasksofTeam(teamID, taskQueryParams)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.Tasks{
@@ -276,24 +276,24 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskToUpdate, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &taskToUpdate)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
@@ -304,13 +304,13 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	err = t.taskService.UpdateTask(taskToUpdate)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
 	response := response.SuccessResponse{
 		Message: constant.TASK_UPDATED,
 	}
-	log.Println("Task Updated Successfully.")
+	config.LoggerInstance.Info(constant.TASK_UPDATED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }

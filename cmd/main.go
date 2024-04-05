@@ -25,7 +25,7 @@ func main() {
 	config.LoadConfig("../.config", "../.config/secret.json")
 	dbConn, redisClient, rabbitmqConn := db.SetDBConection(0)
 	defer dbConn.Close(context.Background())
-
+  
 	socketServer := socket.SocketConnection()
 	port := fmt.Sprintf(":%d", config.Config.Port)
 
@@ -52,6 +52,6 @@ func main() {
 		defer socketServer.Close()
 	}()
 
-	log.Println("Server Started on Port", port)
+	log.Println("Server Started on Port " + port)
 	log.Fatal(srv.ListenAndServe())
 }

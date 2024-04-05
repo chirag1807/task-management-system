@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/chirag1807/logease"
 	"github.com/chirag1807/task-management-system/api/repository"
 	"github.com/chirag1807/task-management-system/api/service"
 	"github.com/chirag1807/task-management-system/config"
@@ -23,6 +24,7 @@ var redisClient *redis.Client
 var rabbitmqConn *amqp.Connection
 var r *chi.Mux
 var socketServer *socketio.Server
+var slogLoggerInstance logease.SlogLoggerInstance
 var authService service.AuthService
 var taskService service.TaskService
 var teamService service.TeamService
@@ -32,6 +34,11 @@ func init() {
 	config.LoadConfig("../../.config/", "../../.config/secret.json")
 	dbConn, redisClient, rabbitmqConn = db.SetDBConection(1)
 	socketServer = socket.SocketConnection()
+	loggerInstance, err := logease.InitLogease(false, config.Config.TeamsWebHookURL, logease.Slog)
+	if err != nil {
+		log.Fatal(err)
+	}
+	slogLoggerInstance = loggerInstance.(logease.SlogLoggerInstance)
 	r = chi.NewRouter()
 
 	authRepository := repository.NewAuthRepo(dbConn)

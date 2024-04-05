@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/chirag1807/logease"
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/route"
@@ -33,6 +35,11 @@ func runTestServer() *httptest.Server {
 	config.LoadConfig("../../.config/", "../../.config/secret.json")
 	dbConn, redisClient, rabbitmqConn = db.SetDBConection(1)
 	socketServer = socket.SocketConnection()
+	loggerInstance, err := logease.InitLogease(false, config.Config.TeamsWebHookURL, logease.Slog)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_ = loggerInstance.(logease.SlogLoggerInstance)
 
 	r := route.InitializeRouter(dbConn, redisClient, rabbitmqConn, socketServer)
 	return httptest.NewServer(r)

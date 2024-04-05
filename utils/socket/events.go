@@ -1,21 +1,21 @@
 package socket
 
 import (
-	"fmt"
 	"log"
 
+	"github.com/chirag1807/task-management-system/config"
 	socketio "github.com/googollee/go-socket.io"
 )
 
 // SocketEvents defined various events like connect, disconnect, join and leave room that client will emit.
 func SocketEvents(server *socketio.Server) {
 	server.OnConnect("/", func(c socketio.Conn) error {
-		log.Println("Connection Made Successfully.", c.ID())
+		config.LoggerInstance.Info("Connection Made Successfully." + c.ID())
 		return nil
 	})
 
 	server.OnEvent("/", "join-room", func(s socketio.Conn, roomName string) {
-		fmt.Println(roomName)
+		config.LoggerInstance.Info("User Joined the Room: " + roomName)
 		server.JoinRoom("/", roomName, s)
 	})
 
@@ -28,7 +28,7 @@ func SocketEvents(server *socketio.Server) {
 	})
 
 	server.OnDisconnect("/", func(c socketio.Conn, s string) {
-		log.Println("socket disconnected:", s)
+		config.LoggerInstance.Info("socket disconnected:" + s)
 	})
 }
 

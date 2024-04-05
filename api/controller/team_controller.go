@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
+	"github.com/chirag1807/task-management-system/config"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
@@ -61,24 +61,24 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &team, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &team)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
@@ -92,14 +92,14 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 
 	teamId, err := t.teamService.CreateTeam(team.TeamDetails, team.TeamMembers)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{
 		Message: constant.TEAM_CREATED,
 		ID:      &teamId,
 	}
-	log.Println("Team Created Successfully.")
+	config.LoggerInstance.Info(constant.TEAM_CREATED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
@@ -128,37 +128,37 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamMembersToAdd, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &teamMembersToAdd)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	err = t.teamService.AddMembersToTeam(userId, teamMembersToAdd)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{
 		Message: constant.MEMBERS_ADDED_TO_TEAM,
 	}
-	log.Println("Members Added to Team Successfully.")
+	config.LoggerInstance.Info(constant.MEMBERS_ADDED_TO_TEAM)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
@@ -186,37 +186,37 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamMembersToRemove, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &teamMembersToRemove)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	err = t.teamService.RemoveMembersFromTeam(userId, teamMembersToRemove)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{
 		Message: constant.MEMBERS_REMOVED_FROM_TEAM,
 	}
-	log.Println("Members Removed from Team Successfully.")
+	config.LoggerInstance.Info(constant.MEMBERS_REMOVED_FROM_TEAM)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
@@ -254,11 +254,11 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
@@ -266,16 +266,16 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 	flag, err := strconv.Atoi(chi.URLParam(r, "Flag"))
 	if err != nil {
 		if strings.Contains(err.Error(), "strconv.Atoi: parsing") {
-			errorhandling.SendErrorResponse(w, errorhandling.ProvideValidFlag)
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidFlag, "")
 			return
 		}
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if flag == 0 || flag == 1 {
 		teams, err := t.teamService.GetAllTeams(userId, flag, teamQueryParams)
 		if err != nil {
-			errorhandling.SendErrorResponse(w, err)
+			errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 			return
 		}
 		response := response.Teams{
@@ -283,7 +283,7 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 		}
 		utils.SendSuccessResponse(w, http.StatusOK, response)
 	} else {
-		errorhandling.SendErrorResponse(w, errorhandling.ProvideValidFlag)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidFlag, "")
 	}
 }
 
@@ -315,26 +315,26 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
 	if err != nil {
 		if strings.Contains(err.Error(), "strconv.ParseInt: parsing") {
-			errorhandling.SendErrorResponse(w, errorhandling.ProvideValidParams)
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, "")
 			return
 		}
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	teamMembers, err := t.teamService.GetTeamMembers(teamID, teamQueryParams)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.TeamMemberDetails{
@@ -359,20 +359,20 @@ func (t teamController) LeftTeam(w http.ResponseWriter, r *http.Request) {
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
 	if err != nil {
 		if strings.Contains(err.Error(), "strconv.ParseInt: parsing") {
-			errorhandling.SendErrorResponse(w, errorhandling.ProvideValidParams)
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, "")
 			return
 		}
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	err = t.teamService.LeftTeam(userId, teamID)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{
 		Message: constant.LEFT_TEAM,
 	}
-	log.Println("Team Left Successfully.")
+	config.LoggerInstance.Info(constant.LEFT_TEAM)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }

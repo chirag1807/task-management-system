@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
+	"github.com/chirag1807/task-management-system/config"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
@@ -52,30 +52,30 @@ func NewUserController(userService service.UserService) UserController {
 // @Router /api/user/get-public-profile-users [get]
 func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
-		constant.LimitKey:          "number|default:10",
-		constant.OffsetKey:         "number|default:0",
-		constant.SearchKey:         "string",
+		constant.LimitKey:  "number|default:10",
+		constant.OffsetKey: "number|default:0",
+		constant.SearchKey: "string",
 	}
 	var queryParamFilters = map[string]string{
-		constant.LimitKey:          "int",
-		constant.OffsetKey:         "int",
+		constant.LimitKey:  "int",
+		constant.OffsetKey: "int",
 	}
 
 	var userQueryParams request.UserQueryParams
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	publicProfileUsers, err := u.userService.GetAllPublicProfileUsers(userQueryParams)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.Users{
@@ -100,7 +100,7 @@ func (u userController) GetMyDetails(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	userDetails, err := u.userService.GetMyDetails(userId)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	utils.SendSuccessResponse(w, http.StatusOK, userDetails)
@@ -139,24 +139,24 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userToUpdate, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &userToUpdate)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
@@ -164,12 +164,12 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 	if userToUpdate.Password != "" {
 		err := u.userService.VerifyUserPassword(userToUpdate.Password, userId)
 		if err != nil {
-			errorhandling.SendErrorResponse(w, err)
+			errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 			return
 		}
 		hashedPassword, err := utils.HashPassword(userToUpdate.NewPassword)
 		if err != nil {
-			errorhandling.SendErrorResponse(w, err)
+			errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 			return
 		}
 		userToUpdate.Password = hashedPassword
@@ -177,14 +177,14 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 
 	err = u.userService.UpdateUserProfile(userId, userToUpdate)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
 	response := response.SuccessResponse{
 		Message: constant.USER_PROFILE_UPDATED,
 	}
-	log.Println(constant.USER_PROFILE_UPDATED)
+	config.LoggerInstance.Info(constant.USER_PROFILE_UPDATED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
@@ -208,24 +208,24 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &user)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
@@ -242,11 +242,11 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 	otpExpireTime := time.Now().UTC().Add(time.Minute * 5)
 	id, err := u.userService.SendOTPToUser(email, OTP, otpExpireTime)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
-	log.Println(OTP)
+	config.LoggerInstance.Info(string(rune(OTP)))
 	response := response.SuccessResponse{
 		Message: constant.OTP_SENT,
 		ID:      &id,
@@ -277,30 +277,30 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &otp, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &otp)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
 	err = u.userService.VerifyOTP(otp)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{
@@ -323,37 +323,37 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 // @Router /api/user/reset-user-password [put]
 func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
-		constant.EmailKey:     `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
-		constant.PasswordKey:  "string|minLen:8|required",
+		constant.EmailKey:    `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
+		constant.PasswordKey: "string|minLen:8|required",
 	}
 	var userEmailPassword request.User
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userEmailPassword, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &userEmailPassword)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
 	err = u.userService.ResetUserPassword(userEmailPassword)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{

@@ -3,13 +3,13 @@ package controller
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
 	"github.com/chirag1807/task-management-system/api/service"
+	"github.com/chirag1807/task-management-system/config"
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
@@ -49,6 +49,7 @@ func NewAuthController(authService service.AuthService) AuthController {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/auth/user-registration [post]
 func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request) {
+
 	var requestParams = map[string]string{
 		constant.FirstNameKey: "string|minLen:2|required",
 		constant.LastNameKey:  "string|minLen:2|required",
@@ -58,40 +59,39 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 		constant.ProfileKey:   "string|in:Public,Private|required",
 	}
 	var userRequest request.User
-
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userRequest, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &userRequest)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
 	hashedPassword, err := utils.HashPassword(userRequest.Password)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	userRequest.Password = hashedPassword
 
 	userId, err := a.authService.UserRegistration(userRequest)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
@@ -99,7 +99,7 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 		Message: constant.USER_REGISTRATION_SUCCEED,
 		ID:      &userId,
 	}
-	log.Println("User Registration Done Successfully.")
+	config.LoggerInstance.Info(constant.USER_REGISTRATION_SUCCEED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
@@ -126,24 +126,24 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userLoginRequest, &requestParams, nil, nil, nil, nil)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(w, invalidParamsMultiLineErrMsg)
+		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
 		return
 	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadBodyError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &userLoginRequest)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.ReadDataError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
 
@@ -151,13 +151,13 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 	var refreshToken string
 	user, refreshToken, err = a.authService.UserLogin(userLoginRequest)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
 	accessToken, err := utils.CreateJWTToken(time.Now().Add(time.Hour*5), user.ID)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
@@ -166,7 +166,7 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}
-	log.Println("User Login Done Successfully.")
+	config.LoggerInstance.Info(constant.USER_LOGIN_SUCCEED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
@@ -181,24 +181,23 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/auth/reset-token [post]
 func (a authController) ResetToken(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Context().Value(constant.TokenKey))
 	token := r.Context().Value(constant.TokenKey).(string)
 
 	userId, err := a.authService.ResetToken(token)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, err)
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
 	accessToken, err := utils.CreateJWTToken(time.Now().Add(time.Hour*5), userId)
 	if err != nil {
-		errorhandling.SendErrorResponse(w, errorhandling.RefreshTokenError)
+		errorhandling.SendErrorResponse(r, w, errorhandling.RefreshTokenError, utils.CreateErrorMessage())
 		return
 	}
 
 	response := response.AccessToken{
 		AccessToken: accessToken,
 	}
-	log.Println("Token Reset Done Successfully.")
+	config.LoggerInstance.Info(constant.TOKEN_RESET_SUCCEED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }

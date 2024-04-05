@@ -1,11 +1,12 @@
 package dto
 
 type Config struct {
-	Port     uint     `mapstructure:"PORT"`
-	Database Database `mapstructure:",squash"`
-	Redis    Redis    `mapstructure:",squash"`
-	RabbitMQ RabbitMQ `mapstructure:",squash"`
-	SMTP     SMTP     `mapstructure:",squash"`
+	Port            uint     `mapstructure:"PORT"`
+	Database        Database `mapstructure:",squash"`
+	Redis           Redis    `mapstructure:",squash"`
+	RabbitMQ        RabbitMQ `mapstructure:",squash"`
+	SMTP            SMTP     `mapstructure:",squash"`
+	TeamsWebHookURL string   `mapstructure:"TEAMS_WEBHOOK_URL"`
 }
 
 type Database struct {
@@ -32,13 +33,13 @@ type RabbitMQ struct {
 	Port     string `mapstructure:"RABBITMQ_PORT"`
 }
 
-type JWTSecret struct {
-	SecretKey string `json:"secretkey"`
-}
-
 type SMTP struct {
 	EmailFrom     string `mapstructure:"SMTP_EMAIL_FROM"`
 	EmailPassword string `mapstructure:"SMTP_EMAIL_PASSWORD"`
 	Host          string `mapstructure:"SMTP_HOST"`
 	Port          string `mapstructure:"SMTP_PORT"`
+}
+
+type JWTSecret struct {
+	SecretKey string `json:"secretkey"`
 }

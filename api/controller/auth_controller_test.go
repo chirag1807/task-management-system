@@ -118,6 +118,7 @@ func TestUserRegistration(t *testing.T) {
 			}
 			jsonValue, err := json.Marshal(user)
 			if err != nil {
+				
 				log.Println(err)
 			}
 			req, err := http.NewRequest("POST", "/api/auth/user-registration", bytes.NewBuffer(jsonValue))

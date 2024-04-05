@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/chirag1807/task-management-system/config"
 )
 
 type CustomError struct {
@@ -58,7 +60,7 @@ var (
 // SendErrorResponse send defined errors in response with error message and status code.
 // and for those errors, which are not defined in global error handling,
 // it will simply send 'Internal Server Error' as error message and 500 as status code.
-func SendErrorResponse(w http.ResponseWriter, err error) {
+func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, message string, params ...interface{}) {
 	var response interface{}
 	log.Println(err.Error())
 
@@ -69,6 +71,7 @@ func SendErrorResponse(w http.ResponseWriter, err error) {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(error.StatusCode)
+		config.LoggerInstance.Warning(err.Error())
 
 	} else {
 		response = CustomError{
@@ -77,6 +80,7 @@ func SendErrorResponse(w http.ResponseWriter, err error) {
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusInternalServerError)
+		config.LoggerInstance.Error(r, err, message, params...)
 	}
 
 	json.NewEncoder(w).Encode(response)
