@@ -40,40 +40,42 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn 
 	userService := service.NewUserService(userRepository)
 	userController := controller.NewUserController(userService)
 
-	router.Route("/api/auth", func(r chi.Router) {
-		r.Post("/user-registration", authController.UserRegistration)
-		r.Post("/user-login", authController.UserLogin)
-		r.With(middleware.VerifyToken(1)).Post("/reset-token", authController.ResetToken)
-	})
-
-	router.Route("/api/task", func(r chi.Router) {
-		r.Use(middleware.VerifyToken(0))
-		r.Post("/create-task", taskController.CreateTask)
-		r.Put("/update-task", taskController.UpdateTask)
-		r.Get("/get-all-tasks/{Flag}", taskController.GetAllTasks)
-		r.Get("/get-tasks-of-team/{TeamID}", taskController.GetTasksofTeam)
-	})
-
-	router.Route("/api/team", func(r chi.Router) {
-		r.Use(middleware.VerifyToken(0))
-		r.Post("/create-team", teamController.CreateTeam)
-		r.Put("/add-members-to-team", teamController.AddMembersToTeam)
-		r.Put("/remove-members-from-team", teamController.RemoveMembersFromTeam)
-		r.Get("/get-all-teams/{Flag}", teamController.GetAllTeams)
-		r.Get("/get-team-members/{TeamID}", teamController.GetTeamMembers)
-		r.Delete("/left-team/{TeamID}", teamController.LeftTeam)
-	})
-
-	router.Route("/api/user", func(r chi.Router) {
-		r.Group(func(r chi.Router) {
-			r.Use(middleware.VerifyToken(0))
-			r.Get("/get-public-profile-users", userController.GetAllPublicProfileUsers)
-			r.Get("/get-my-details", userController.GetMyDetails)
-			r.Put("/update-user-profile", userController.UpdateUserProfile)
+	router.Route("/api/v1", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/registration", authController.UserRegistration)
+			r.Post("/login", authController.UserLogin)
+			r.With(middleware.VerifyToken(1)).Post("/reset-token", authController.ResetToken)
 		})
-		r.Post("/send-otp-to-user", userController.SendOTPToUser)
-		r.Post("/verify-otp", userController.VerifyOTP)
-		r.Put("/reset-user-password", userController.ResetUserPassword)
+
+		r.Route("/tasks", func(r chi.Router) {
+			r.Use(middleware.VerifyToken(0))
+			r.Post("/", taskController.CreateTask)
+			r.Put("/", taskController.UpdateTask)
+			r.Get("/{Flag}", taskController.GetAllTasks)
+			r.Get("/team/{TeamID}", taskController.GetTasksofTeam)
+		})
+
+		r.Route("/teams", func(r chi.Router) {
+			r.Use(middleware.VerifyToken(0))
+			r.Post("/", teamController.CreateTeam)
+			r.Put("/members", teamController.AddMembersToTeam)
+			r.Delete("/members", teamController.RemoveMembersFromTeam)
+			r.Get("/{Flag}", teamController.GetAllTeams)
+			r.Get("/{TeamID}/members", teamController.GetTeamMembers)
+			r.Delete("/{TeamID}", teamController.LeaveTeam)
+		})
+
+		r.Route("/users", func(r chi.Router) {
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.VerifyToken(0))
+				r.Get("/public-profiles", userController.GetAllPublicProfileUsers)
+				r.Get("/profile", userController.GetMyDetails)
+				r.Put("/profile", userController.UpdateUserProfile)
+			})
+			r.Post("/send-otp", userController.SendOTPToUser)
+			r.Post("/verify-otp", userController.VerifyOTP)
+			r.Put("/reset-password", userController.ResetUserPassword)
+		})
 	})
 
 	return router

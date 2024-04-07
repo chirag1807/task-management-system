@@ -23,7 +23,7 @@ type TeamController interface {
 	RemoveMembersFromTeam(w http.ResponseWriter, r *http.Request)
 	GetAllTeams(w http.ResponseWriter, r *http.Request)
 	GetTeamMembers(w http.ResponseWriter, r *http.Request)
-	LeftTeam(w http.ResponseWriter, r *http.Request)
+	LeaveTeam(w http.ResponseWriter, r *http.Request)
 }
 
 type teamController struct {
@@ -49,7 +49,7 @@ func NewTeamController(teamService service.TeamService) TeamController {
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/team/create-team [post]
+// @Router /api/v1/teams [post]
 func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamNameKey:      "string|minLen:3|maxLen:15|required",
@@ -118,7 +118,7 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 // @Failure 403 {object} errorhandling.CustomError "Not allowed to add members."
 // @Failure 409 {object} errorhandling.CustomError "Member already exist."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/team/add-members-to-team [put]
+// @Router /api/v1/teams/members [put]
 func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamIdKey:       "number|required",
@@ -176,7 +176,7 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 403 {object} errorhandling.CustomError "Not allowed to add members."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/team/remove-members-from-team [put]
+// @Router /api/v1/teams/members [delete]
 func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TeamIdKey:       "number|required",
@@ -236,7 +236,7 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 422 {object} errorhandling.CustomError "Provide valid flag"
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
-// @Router /api/team/get-all-teams/{Flag} [get]
+// @Router /api/v1/teams/{Flag} [get]
 func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
 		constant.LimitKey:          "number|default:10",
@@ -300,7 +300,7 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
-// @Router /api/task/get-team-members/{TeamID} [get]
+// @Router /api/v1/teams/{TeamID}/members [get]
 func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
 		constant.LimitKey:  "number|default:10",
@@ -343,8 +343,8 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }
 
-// LeftTeam removes user from particular team.
-// @Summary Left Team
+// LeaveTeam removes user from particular team.
+// @Summary Leave Team
 // @Description Removes user from particular team
 // @Produce json
 // @Tags teams
@@ -353,8 +353,8 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} response.SuccessResponse "Team left successfully."
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired or you are not a member of that team."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
-// @Router /api/task/left-team/{TeamID} [delete]
-func (t teamController) LeftTeam(w http.ResponseWriter, r *http.Request) {
+// @Router /api/v1/teams/{TeamID} [delete]
+func (t teamController) LeaveTeam(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
 	if err != nil {
@@ -365,14 +365,14 @@ func (t teamController) LeftTeam(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
-	err = t.teamService.LeftTeam(userId, teamID)
+	err = t.teamService.LeaveTeam(userId, teamID)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{
-		Message: constant.LEFT_TEAM,
+		Message: constant.LEAVE_TEAM,
 	}
-	config.LoggerInstance.Info(constant.LEFT_TEAM)
+	config.LoggerInstance.Info(constant.LEAVE_TEAM)
 	utils.SendSuccessResponse(w, http.StatusOK, response)
 }

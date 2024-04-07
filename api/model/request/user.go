@@ -3,13 +3,13 @@ package request
 // User model info
 // @Description User information with first name, last name, bio, email, password and profile.
 type User struct {
-	FirstName   string `json:"firstName" db:"first_name" example:"Chirag"`
+	FirstName   string `json:"firstName" db:"first_name" example:"Chirag" validate:"required,alpha,min=2"`
 	LastName    string `json:"lastName" db:"last_name" example:"Makwana"`
 	Bio         string `json:"bio" db:"bio" example:"Junior Software Engineer at ZURU TECH INDIA."`
-	Email       string `json:"email" db:"email" example:"chiragmakwana@gmail.com"`
+	Email       string `json:"email" db:"email" example:"chiragmakwana@gmail.com" validate:"required,email"`
 	Password    string `json:"password" db:"password" example:"Chirag123$"`
 	NewPassword string `json:"newPassword" db:"password" example:"Chirag123$"`
-	Profile     string `json:"profile" db:"profile" example:"Public"`
+	Profile     string `json:"profile" db:"profile" example:"Public" validate:"required,oneof=Public Private"`
 }
 
 // UserQueryParams model info

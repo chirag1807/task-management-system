@@ -6,7 +6,7 @@ services:
     command: start-single-node --insecure
     ports:
       - "26290:26257" # CockroachDB client connection
-      - "8080:8080"   # CockroachDB admin UI
+      - "9000:9000"   # CockroachDB admin UI
     volumes:
       - cockroach-data:/cockroach/cockroach-data
     networks:
@@ -44,8 +44,8 @@ services:
     ports:
       - "9090:9090"
     environment:
-      - WAIT_HOSTS=cockroachdb:26257,redis:6379,rabbitmq:5672
       - DATABASE_URL=postgresql://root@cockroachdb:26257/taskmanager?sslmode=disable
+      - WAIT_HOSTS=cockroachdb:26257,redis:6379,rabbitmq:5672
     env_file:
       - .config/.env
     links:

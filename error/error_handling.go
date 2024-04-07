@@ -80,7 +80,7 @@ func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, messag
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusInternalServerError)
-		config.LoggerInstance.Error(r, err, message, params...)
+		// config.LoggerInstance.Error(r, err, message, params...)
 	}
 
 	json.NewEncoder(w).Encode(response)

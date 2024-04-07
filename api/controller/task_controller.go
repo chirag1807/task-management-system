@@ -53,7 +53,7 @@ func NewTaskController(taskService service.TaskService) TaskController {
 // @Failure 400 {object} errorhandling.CustomError "Bad request, either data is not valid or assignee profile is Private."
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/task/create-task [post]
+// @Router /api/v1/tasks [post]
 func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TitleKey:              "string|minLen:4|maxLen:24|required",
@@ -123,7 +123,7 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 422 {object} errorhandling.CustomError "Provide valid flag"
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
-// @Router /api/task/get-all-tasks/{Flag} [get]
+// @Router /api/v1/tasks/{Flag} [get]
 func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
 		constant.LimitKey:        "number|default:10",
@@ -191,7 +191,7 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
-// @Router /api/task/get-tasks-of-team/{TeamID} [get]
+// @Router /api/v1/tasks/team/{TeamID} [get]
 // GetTasksOfTeam fetches all tasks of a specific team.
 func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
@@ -261,7 +261,7 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} errorhandling.CustomError "Task not found"
 // @Failure 422 {object} errorhandling.CustomError "Task is closed"
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
-// @Router /api/task/update-task [put]
+// @Router /api/v1/tasks/ [put]
 func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.TaskIdKey:             "number|required",

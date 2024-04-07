@@ -12,7 +12,7 @@ type TeamService interface {
 	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error
 	GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error)
 	GetTeamMembers(teamID int64, queryParams request.TeamQueryParams) ([]response.User, error)
-	LeftTeam(userID int64, teamID int64) (error)
+	LeaveTeam(userID int64, teamID int64) (error)
 }
 
 type teamService struct {
@@ -45,6 +45,6 @@ func (t teamService) GetTeamMembers(teamID int64, queryParams request.TeamQueryP
 	return t.teamRepository.GetTeamMembers(teamID, queryParams)
 }
 
-func (t teamService) LeftTeam(userID int64, teamID int64) (error) {
+func (t teamService) LeaveTeam(userID int64, teamID int64) (error) {
 	return t.teamRepository.LeftTeam(userID, teamID)
 }

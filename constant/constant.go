@@ -3,7 +3,7 @@ package constant
 const (
 	INVALID_TOKEN             = "This Token is Invalid"
 	INVALID_CLAIMS            = "Token Cliams are Invalid"
-	LEFT_TEAM                 = "Team Left Successfully."
+	LEAVE_TEAM                = "Team Left Successfully."
 	MEMBERS_ADDED_TO_TEAM     = "Members Added to Team."
 	MEMBERS_REMOVED_FROM_TEAM = "Members Removed from Team."
 	OTP_SENT                  = "OTP Sent to given Email ID Successfully."

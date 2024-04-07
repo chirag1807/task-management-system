@@ -15,49 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/auth/reset-token": {
-            "post": {
-                "description": "ResetToken API is made for reset the user's access token.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Reset Access Token",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003crefresh_token\u003e",
-                        "description": "Refresh Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Token reset done successfully.",
-                        "schema": {
-                            "$ref": "#/definitions/response.AccessToken"
-                        }
-                    },
-                    "401": {
-                        "description": "Either refresh token not found or token is expired.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/auth/user-login": {
+        "/api/v1/auth/login": {
             "post": {
                 "description": "UserLogin API is made for login the user in task manager application.",
                 "consumes": [
@@ -120,7 +78,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/auth/user-registration": {
+        "/api/v1/auth/registration": {
             "post": {
                 "description": "UserRegistration API is made for registering a new user in the task manager application.",
                 "consumes": [
@@ -205,7 +163,49 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/task/create-task": {
+        "/api/v1/auth/reset-token": {
+            "post": {
+                "description": "ResetToken API is made for reset the user's access token.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Reset Access Token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003crefresh_token\u003e",
+                        "description": "Refresh Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token reset done successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.AccessToken"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tasks": {
             "post": {
                 "description": "CreateTask API is made for creating a new task in the task manager application.",
                 "consumes": [
@@ -296,299 +296,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/task/get-all-tasks/{Flag}": {
-            "get": {
-                "description": "Get all tasks of user based on query parameters",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tasks"
-                ],
-                "summary": "Get all tasks",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003caccess_token\u003e",
-                        "description": "Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Flag indicating 0 means tasks created by user and 1 means tasks assigned to user.",
-                        "name": "Flag",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Number of tasks to return per page (default 10)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset for pagination (default 0)",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Search term to filter tasks",
-                        "name": "search",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Sort tasks by create time (true for ascending, false for descending)",
-                        "name": "sortByFilter",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Tasks fetched successfully.",
-                        "schema": {
-                            "$ref": "#/definitions/response.Tasks"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "401": {
-                        "description": "Either refresh token not found or token is expired.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "422": {
-                        "description": "Provide valid flag",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/task/get-tasks-of-team/{TeamID}": {
-            "get": {
-                "description": "Get all tasks of a team based on query parameters",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tasks"
-                ],
-                "summary": "Get all tasks of a team",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003caccess_token\u003e",
-                        "description": "Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Team ID",
-                        "name": "TeamID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Number of tasks to return per page (default 10)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset for pagination (default 0)",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Search term to filter tasks",
-                        "name": "search",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Sort tasks by create time (true for ascending, false for descending)",
-                        "name": "sortByFilter",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Tasks fetched successfully.",
-                        "schema": {
-                            "$ref": "#/definitions/response.Tasks"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "401": {
-                        "description": "Either refresh token not found or token is expired.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/task/get-team-members/{TeamID}": {
-            "get": {
-                "description": "Get all members of team based on query parameters",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "teams"
-                ],
-                "summary": "Get all team members",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003caccess_token\u003e",
-                        "description": "Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID of team whose members you want.",
-                        "name": "TeamID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Number of tasks to return per page (default 10)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset for pagination (default 0)",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Team members fetched successfully.",
-                        "schema": {
-                            "$ref": "#/definitions/response.TeamMemberDetails"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "401": {
-                        "description": "Either refresh token not found or token is expired.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/task/left-team/{TeamID}": {
-            "delete": {
-                "description": "Removes user from particular team",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "teams"
-                ],
-                "summary": "Left Team",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003caccess_token\u003e",
-                        "description": "Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID of team whose members you want.",
-                        "name": "TeamID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Team left successfully.",
-                        "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Either refresh token not found or token is expired or you are not a member of that team.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/task/update-task": {
+        "/api/v1/tasks/": {
             "put": {
                 "description": "Update a task based on provided parameters",
                 "consumes": [
@@ -700,19 +408,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/team/add-members-to-team": {
-            "put": {
-                "description": "Add members to a team based on provided parameters",
-                "consumes": [
-                    "application/json"
-                ],
+        "/api/v1/tasks/team/{TeamID}": {
+            "get": {
+                "description": "Get all tasks of a team based on query parameters",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "teams"
+                    "tasks"
                 ],
-                "summary": "Add members to a team",
+                "summary": "Get all tasks of a team",
                 "parameters": [
                     {
                         "type": "string",
@@ -725,23 +430,46 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "Team ID",
-                        "name": "teamID",
-                        "in": "formData",
+                        "name": "TeamID",
+                        "in": "path",
                         "required": true
                     },
                     {
-                        "type": "array",
-                        "description": "Array of member IDs to add to the team",
-                        "name": "memberID",
-                        "in": "formData",
-                        "required": true
+                        "type": "integer",
+                        "description": "Number of tasks to return per page (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term to filter tasks",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Sort tasks by create time (true for ascending, false for descending)",
+                        "name": "sortByFilter",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Members added successfully",
+                        "description": "Tasks fetched successfully.",
                         "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
+                            "$ref": "#/definitions/response.Tasks"
                         }
                     },
                     "400": {
@@ -756,20 +484,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
                     },
-                    "403": {
-                        "description": "Not allowed to add members.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "409": {
-                        "description": "Member already exist.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
                     "500": {
-                        "description": "Internal server error.",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
@@ -777,7 +493,98 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/team/create-team": {
+        "/api/v1/tasks/{Flag}": {
+            "get": {
+                "description": "Get all tasks of user based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get all tasks",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Flag indicating 0 means tasks created by user and 1 means tasks assigned to user.",
+                        "name": "Flag",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of tasks to return per page (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term to filter tasks",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Sort tasks by create time (true for ascending, false for descending)",
+                        "name": "sortByFilter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tasks fetched successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.Tasks"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "422": {
+                        "description": "Provide valid flag",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/teams": {
             "post": {
                 "description": "CreateTeam API is made for creating a new team in the task manager application.",
                 "consumes": [
@@ -877,7 +684,153 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/team/get-all-teams/{Flag}": {
+        "/api/v1/teams/members": {
+            "put": {
+                "description": "Add members to a team based on provided parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Add members to a team",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "teamID",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "description": "Array of member IDs to add to the team",
+                        "name": "memberID",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Members added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "403": {
+                        "description": "Not allowed to add members.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "409": {
+                        "description": "Member already exist.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove members from a team based on provided parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Remove members from a team",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "teamID",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "description": "Array of member IDs to add to the team",
+                        "name": "memberID",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Members Removed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "403": {
+                        "description": "Not allowed to add members.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/teams/{Flag}": {
             "get": {
                 "description": "Get all teams of user based on query parameters",
                 "produces": [
@@ -962,19 +915,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/team/remove-members-from-team": {
-            "put": {
-                "description": "Remove members from a team based on provided parameters",
-                "consumes": [
-                    "application/json"
-                ],
+        "/api/v1/teams/{TeamID}": {
+            "delete": {
+                "description": "Removes user from particular team",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "teams"
                 ],
-                "summary": "Remove members from a team",
+                "summary": "Leave Team",
                 "parameters": [
                     {
                         "type": "string",
@@ -986,24 +936,78 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Team ID",
-                        "name": "teamID",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "array",
-                        "description": "Array of member IDs to add to the team",
-                        "name": "memberID",
-                        "in": "formData",
+                        "description": "ID of team whose members you want.",
+                        "name": "TeamID",
+                        "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Members Removed successfully",
+                        "description": "Team left successfully.",
                         "schema": {
                             "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired or you are not a member of that team.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/teams/{TeamID}/members": {
+            "get": {
+                "description": "Get all members of team based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Get all team members",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of team whose members you want.",
+                        "name": "TeamID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of tasks to return per page (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Team members fetched successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.TeamMemberDetails"
                         }
                     },
                     "400": {
@@ -1018,14 +1022,8 @@ const docTemplate = `{
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
                     },
-                    "403": {
-                        "description": "Not allowed to add members.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
                     "500": {
-                        "description": "Internal server error.",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
@@ -1033,7 +1031,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/user/get-my-details": {
+        "/api/v1/users/profile": {
             "get": {
                 "description": "Get details of the authenticated user based on the authenticated user ID provided via token.",
                 "produces": [
@@ -1079,176 +1077,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/api/user/get-public-profile-users": {
-            "get": {
-                "description": "Get all public profile users based on query parameters",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get all public profile users",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003caccess_token\u003e",
-                        "description": "Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Number of users to return per page (default 10)",
-                        "name": "Limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset for pagination (default 0)",
-                        "name": "Offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Search term to filter users",
-                        "name": "Search",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Public profile users fetched successfully",
-                        "schema": {
-                            "$ref": "#/definitions/response.Users"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "401": {
-                        "description": "Either refresh token not found or token is expired.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/user/reset-user-password": {
-            "put": {
-                "description": "ResetUserPassword API is made for reset user password.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "reset user password",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Email of the user",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "New password of the user",
-                        "name": "password",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Password reset done successfully.",
-                        "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/user/send-otp-to-user": {
-            "post": {
-                "description": "SendOTPToUser API is made for sending an otp to user's email address.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Sends an OTP",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Email of the user",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OTP sent successfully.",
-                        "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "404": {
-                        "description": "No Email found.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/user/update-user-profile": {
+            },
             "put": {
                 "description": "UpdateUserProfile API is made for updating a user's profile.",
                 "consumes": [
@@ -1347,7 +1176,174 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/user/verify-otp": {
+        "/api/v1/users/public-profiles": {
+            "get": {
+                "description": "Get all public profile users based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get all public profile users",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of users to return per page (default 10)",
+                        "name": "Limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "Offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term to filter users",
+                        "name": "Search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Public profile users fetched successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.Users"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/reset-password": {
+            "put": {
+                "description": "ResetUserPassword API is made for reset user password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "reset user password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email of the user",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "New password of the user",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset done successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/send-otp": {
+            "post": {
+                "description": "SendOTPToUser API is made for sending an otp to user's email address.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Sends an OTP",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email of the user",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "404": {
+                        "description": "No Email found.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/verify-otp": {
             "post": {
                 "description": "VerifyOTP API is made for verifying an otp from user.",
                 "consumes": [

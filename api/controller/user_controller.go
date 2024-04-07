@@ -49,7 +49,7 @@ func NewUserController(userService service.UserService) UserController {
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/user/get-public-profile-users [get]
+// @Router /api/v1/users/public-profiles [get]
 func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.Request) {
 	var queryParams = map[string]string{
 		constant.LimitKey:  "number|default:10",
@@ -94,8 +94,7 @@ func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/user/get-my-details [get]
-// /get-my-details
+// @Router /api/v1/users/profile [get]
 func (u userController) GetMyDetails(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	userDetails, err := u.userService.GetMyDetails(userId)
@@ -125,7 +124,7 @@ func (u userController) GetMyDetails(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} errorhandling.CustomError "No user found."
 // @Failure 409 {object} errorhandling.CustomError "Duplicate email found."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/user/update-user-profile [put]
+// @Router /api/v1/users/profile [put]
 func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.FirstNameKey: "string|minLen:2",
@@ -199,7 +198,7 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 // @Failure 400 {object} errorhandling.CustomError "Bad request."
 // @Failure 404 {object} errorhandling.CustomError "No Email found."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/user/send-otp-to-user [post]
+// @Router /api/v1/users/send-otp [post]
 func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.EmailKey: `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
@@ -267,7 +266,7 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} errorhandling.CustomError "OTP not matched."
 // @Failure 403 {object} errorhandling.CustomError "OTP verification time expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/user/verify-otp [post]
+// @Router /api/v1/users/verify-otp [post]
 func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.OTPIdKey:   "number|required",
@@ -320,7 +319,7 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} response.SuccessResponse "Password reset done successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
-// @Router /api/user/reset-user-password [put]
+// @Router /api/v1/users/reset-password [put]
 func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request) {
 	var requestParams = map[string]string{
 		constant.EmailKey:    `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,

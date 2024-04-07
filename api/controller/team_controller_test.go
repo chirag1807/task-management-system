@@ -326,7 +326,7 @@ func TestLeftTeam(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/task/left-team/:TeamID", NewTeamController(teamService).LeftTeam)
+			r.Get("/api/task/left-team/:TeamID", NewTeamController(teamService).LeaveTeam)
 
 			req, err := http.NewRequest("GET", "/api/task/left-team/:TeamID", http.NoBody)
 			if err != nil {
