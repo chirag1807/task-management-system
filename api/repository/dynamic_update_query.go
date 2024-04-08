@@ -49,7 +49,7 @@ func UpdateQuery(tableName string, model interface{}, id int64, flag int) (strin
 	return query, args, nil
 }
 
-func UpdateTaskFields(dbTask response.Task, requestTask request.Task) response.Task {
+func UpdateTaskFields(dbTask response.Task, requestTask request.UpdateTask) response.Task {
 	dbTaskType := reflect.TypeOf(dbTask)
 	dbTaskValue := reflect.ValueOf(&dbTask).Elem()
 	requestTaskValue := reflect.ValueOf(requestTask)

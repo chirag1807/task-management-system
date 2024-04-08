@@ -15,6 +15,7 @@ import (
 	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
+	"github.com/gorilla/schema"
 )
 
 type UserController interface {
@@ -51,26 +52,23 @@ func NewUserController(userService service.UserService) UserController {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/users/public-profiles [get]
 func (u userController) GetAllPublicProfileUsers(w http.ResponseWriter, r *http.Request) {
-	var queryParams = map[string]string{
-		constant.LimitKey:  "number|default:10",
-		constant.OffsetKey: "number|default:0",
-		constant.SearchKey: "string",
-	}
-	var queryParamFilters = map[string]string{
-		constant.LimitKey:  "int",
-		constant.OffsetKey: "int",
-	}
-
 	var userQueryParams request.UserQueryParams
 
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	decoder := schema.NewDecoder()
+	err := decoder.Decode(&userQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
 		return
 	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
+
+	err = utils.Validate.Struct(userQueryParams)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
+	}
+
+	if userQueryParams.Limit == 0 {
+		userQueryParams.Limit = 10
 	}
 
 	publicProfileUsers, err := u.userService.GetAllPublicProfileUsers(userQueryParams)
@@ -126,25 +124,7 @@ func (u userController) GetMyDetails(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/users/profile [put]
 func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.FirstNameKey: "string|minLen:2",
-		constant.LastNameKey:  "string|minLen:2",
-		constant.BioKey:       "string|minLen:6",
-		constant.EmailKey:     `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$`,
-		constant.PasswordKey:  "string|minLen:8",
-		constant.ProfileKey:   "string|in:Public,Private",
-	}
-	var userToUpdate request.User
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userToUpdate, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
+	var userToUpdate request.UpdateUser
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -156,6 +136,12 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 	err = json.Unmarshal(body, &userToUpdate)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(userToUpdate)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 
@@ -200,20 +186,7 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/users/send-otp [post]
 func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.EmailKey: `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
-	}
-	var user request.User
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &user, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
+	var userEmail request.UserEmail
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -222,9 +195,15 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	err = json.Unmarshal(body, &user)
+	err = json.Unmarshal(body, &userEmail)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(userEmail)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 
@@ -233,7 +212,7 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 
 	emailBody := utils.PrepareEmailBody(OTP)
 	email := dto.Email{
-		To:      user.Email,
+		To:      userEmail.Email,
 		Subject: "OTP Verification",
 		Body:    emailBody,
 	}
@@ -268,21 +247,7 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/users/verify-otp [post]
 func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.OTPIdKey:   "number|required",
-		constant.OTPCodeKey: "int|min:1000|max:9999|required",
-	}
 	var otp request.OTP
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &otp, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -294,6 +259,12 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &otp)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(otp)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 
@@ -321,21 +292,7 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/users/reset-password [put]
 func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.EmailKey:    `string|regex:^[\w.%+-]+@[\w.-]+\.[a-zA-Z]{2,}$|required`,
-		constant.PasswordKey: "string|minLen:8|required",
-	}
-	var userEmailPassword request.User
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &userEmailPassword, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
+	var userEmailPassword request.UserCredentials
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -347,6 +304,12 @@ func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request
 	err = json.Unmarshal(body, &userEmailPassword)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(userEmailPassword)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 

@@ -14,7 +14,7 @@ import (
 
 type AuthRepository interface {
 	UserRegistration(user request.User) (int64, error)
-	UserLogin(user request.User) (response.User, string, error)
+	UserLogin(user request.UserCredentials) (response.User, string, error)
 	ResetToken(refreshToken string) (int64, error)
 }
 
@@ -41,7 +41,7 @@ func (a authRepository) UserRegistration(user request.User) (int64, error) {
 	return userID, nil
 }
 
-func (a authRepository) UserLogin(user request.User) (response.User, string, error) {
+func (a authRepository) UserLogin(user request.UserCredentials) (response.User, string, error) {
 	var dbUser response.User
 	row := a.dbConn.QueryRow(context.Background(), `SELECT id, first_name, last_name, bio, email, password, profile FROM users WHERE email = $1`, user.Email)
 	err := row.Scan(&dbUser.ID, &dbUser.FirstName, &dbUser.LastName, &dbUser.Bio, &dbUser.Email, &dbUser.Password, &dbUser.Profile)

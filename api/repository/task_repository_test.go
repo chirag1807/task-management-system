@@ -188,10 +188,9 @@ func TestUpdateTask(t *testing.T) {
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
 
-			task := request.Task{
+			task := request.UpdateTask{
 				ID:        v.ID,
 				Title:     v.Title,
-				CreatedBy: v.CreatedBy,
 				UpdatedBy: &v.UpdatedBy,
 				UpdatedAt: &v.UpdatedAt,
 			}

@@ -91,7 +91,7 @@ func TestUserLogin(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			user := request.User{
+			user := request.UserCredentials{
 				Email:    v.Email,
 				Password: v.Password,
 			}

@@ -16,6 +16,7 @@ import (
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/schema"
 )
 
 type TaskController interface {
@@ -55,26 +56,7 @@ func NewTaskController(taskService service.TaskService) TaskController {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/tasks [post]
 func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.TitleKey:              "string|minLen:4|maxLen:24|required",
-		constant.DescriptionKey:        "string|minLen:12|maxLen:108|required",
-		constant.DeadlineKey:           "required",
-		constant.AssigneeIndividualKey: `number`,
-		constant.AssigneeTeamKey:       "number",
-		constant.StatusKey:             "string|in:TO-DO,In-Progress,Completed,Closed|required",
-		constant.PriorityKey:           "string|in:Low,Medium,High,Very High|required",
-	}
 	var taskToCreate request.Task
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskToCreate, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -86,6 +68,12 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &taskToCreate)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(taskToCreate)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 
@@ -125,29 +113,23 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
 // @Router /api/v1/tasks/{Flag} [get]
 func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
-	var queryParams = map[string]string{
-		constant.LimitKey:        "number|default:10",
-		constant.OffsetKey:       "number|default:0",
-		constant.SearchKey:       "string",
-		constant.StatusFilterKey: "string|in:TO-DO,In-Progress,Completed,Closed",
-		constant.SortByFilterKey: "bool",
-	}
-	var queryParamFilters = map[string]string{
-		constant.LimitKey:        "int",
-		constant.OffsetKey:       "int",
-		constant.SortByFilterKey: "bool",
-	}
-
 	var taskQueryParams request.TaskQueryParams
 
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	decoder := schema.NewDecoder()
+	err := decoder.Decode(&taskQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
 		return
 	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
+
+	err = utils.Validate.Struct(taskQueryParams)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
+	}
+
+	if taskQueryParams.Limit == 0 {
+		taskQueryParams.Limit = 10
 	}
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
@@ -194,29 +176,23 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 // @Router /api/v1/tasks/team/{TeamID} [get]
 // GetTasksOfTeam fetches all tasks of a specific team.
 func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
-	var queryParams = map[string]string{
-		constant.LimitKey:        "number|default:10",
-		constant.OffsetKey:       "number|default:0",
-		constant.SearchKey:       "string",
-		constant.StatusFilterKey: "string|in:TO-DO,In-Progress,Completed,Closed",
-		constant.SortByFilterKey: "bool",
-	}
-	var queryParamFilters = map[string]string{
-		constant.LimitKey:        "int",
-		constant.OffsetKey:       "int",
-		constant.SortByFilterKey: "bool",
-	}
-
 	var taskQueryParams request.TaskQueryParams
 
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	decoder := schema.NewDecoder()
+	err := decoder.Decode(&taskQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
 		return
 	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
+
+	err = utils.Validate.Struct(taskQueryParams)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
+	}
+
+	if taskQueryParams.Limit == 0 {
+		taskQueryParams.Limit = 10
 	}
 
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
@@ -263,26 +239,7 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
 // @Router /api/v1/tasks/ [put]
 func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.TaskIdKey:             "number|required",
-		constant.TitleKey:              "string|minLen:4|maxLen:48",
-		constant.DescriptionKey:        "string|minLen:12|maxLen:196",
-		constant.AssigneeIndividualKey: "number",
-		constant.AssigneeTeamKey:       "number",
-		constant.StatusKey:             "string|in:TO-DO,In-Progress,Completed,Closed",
-		constant.PriorityKey:           "string|in:Low,Medium,High,Very High",
-	}
-	var taskToUpdate request.Task
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &taskToUpdate, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
+	var taskToUpdate request.UpdateTask
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -294,6 +251,12 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &taskToUpdate)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(taskToUpdate)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 

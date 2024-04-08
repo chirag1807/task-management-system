@@ -8,7 +8,7 @@ import (
 
 type AuthService interface {
 	UserRegistration(user request.User) (int64, error)
-	UserLogin(user request.User) (response.User, string, error)
+	UserLogin(user request.UserCredentials) (response.User, string, error)
 	ResetToken(refreshToken string) (int64, error)
 }
 
@@ -26,7 +26,7 @@ func (a authService) UserRegistration(user request.User) (int64, error) {
 	return a.authRepository.UserRegistration(user)
 }
 
-func (a authService) UserLogin(user request.User) (response.User, string, error) {
+func (a authService) UserLogin(user request.UserCredentials) (response.User, string, error) {
 	return a.authRepository.UserLogin(user)
 }
 

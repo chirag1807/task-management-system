@@ -106,7 +106,7 @@ func TestUpdateUserProfile(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			userToUpdate := request.User{
+			userToUpdate := request.UpdateUser{
 				FirstName: v.FirstName,
 				LastName:  v.LastName,
 				Email:     v.Email,
@@ -211,7 +211,7 @@ func TestResetUserPassword(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			userEmailPassword := request.User{
+			userEmailPassword := request.UserCredentials{
 				Email: v.Email,
 				Password: v.Password,
 			}

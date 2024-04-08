@@ -1,20 +1,15 @@
 package errorhandling
 
 import (
-	"encoding/json"
-	"log"
 	"net/http"
-
-	"github.com/chirag1807/task-management-system/config"
 )
 
 type CustomError struct {
-	StatusCode   int    `example:"000"`
-	ErrorMessage string `example:"Corresponding Error Message will Show Here"`
+	StatusCode   int    `json:"statuscode" example:"000"`
+	ErrorMessage string `json:"error" example:"Corresponding Error Message will Show Here"`
 }
 
-// here I implemented error interface's Error() method.
-// so that we can customize error for our project.
+// here I implemented error interface's Error() method. so that we can customize error for our project.
 func (c CustomError) Error() string {
 	return c.ErrorMessage
 }
@@ -48,6 +43,7 @@ var (
 	ProvideValidFlag                 = CreateCustomError("Please Provide Valid Flag to Proceed Further. Flag Value must be either 0 or 1", http.StatusUnprocessableEntity)
 	ProvideValidParams               = CreateCustomError("Please Provide Valid URL Parameter to Proceed Further.", http.StatusUnprocessableEntity)
 	ReadBodyError                    = CreateCustomError("Could not Read Request Body, Please Provide Valid Body.", http.StatusBadRequest)
+	ReadQueryParamsError             = CreateCustomError("Could not Read Request Query Parameters, Please Provide Valid Query Parameters.", http.StatusBadRequest)
 	ReadDataError                    = CreateCustomError("Could not Decode the Data, Please Provide Valid Data.", http.StatusBadRequest)
 	RegistrationFailedError          = CreateCustomError("User Registration Failed.", http.StatusInternalServerError)
 	RefreshTokenExpired              = CreateCustomError("Access Token is Expired, Please Do Login Again.", http.StatusUnauthorized)
@@ -56,32 +52,3 @@ var (
 	TokenNotFound                    = CreateCustomError("Authorization Token Not Found.", http.StatusUnauthorized)
 	TaskClosed                       = CreateCustomError("Task Can't be Updated because It is Closed.", http.StatusUnprocessableEntity)
 )
-
-// SendErrorResponse send defined errors in response with error message and status code.
-// and for those errors, which are not defined in global error handling,
-// it will simply send 'Internal Server Error' as error message and 500 as status code.
-func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, message string, params ...interface{}) {
-	var response interface{}
-	log.Println(err.Error())
-
-	if error, ok := err.(CustomError); ok {
-		response = CustomError{
-			StatusCode:   error.StatusCode,
-			ErrorMessage: error.ErrorMessage,
-		}
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(error.StatusCode)
-		config.LoggerInstance.Warning(err.Error())
-
-	} else {
-		response = CustomError{
-			StatusCode:   http.StatusInternalServerError,
-			ErrorMessage: "Internal Server Error",
-		}
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusInternalServerError)
-		// config.LoggerInstance.Error(r, err, message, params...)
-	}
-
-	json.NewEncoder(w).Encode(response)
-}

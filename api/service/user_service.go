@@ -12,10 +12,10 @@ import (
 type UserService interface {
 	GetAllPublicProfileUsers(queryParams request.UserQueryParams) ([]response.User, error)
 	GetMyDetails(userId int64) (response.User, error)
-	UpdateUserProfile(userId int64, userToUpdate request.User) error
+	UpdateUserProfile(userId int64, userToUpdate request.UpdateUser) error
 	SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTime time.Time) (int64, error)
 	VerifyOTP(otpFromUser request.OTP) error
-	ResetUserPassword(userEmailPassword request.User) error
+	ResetUserPassword(userEmailPassword request.UserCredentials) error
 	VerifyUserPassword(userPassword string, userId int64) error
 }
 
@@ -37,7 +37,7 @@ func (u userService) GetMyDetails(userId int64) (response.User, error) {
 	return u.userRepository.GetMyDetails(userId)
 }
 
-func (u userService) UpdateUserProfile(userId int64, userToUpdate request.User) error {
+func (u userService) UpdateUserProfile(userId int64, userToUpdate request.UpdateUser) error {
 	return u.userRepository.UpdateUserProfile(userId, userToUpdate)
 }
 
@@ -49,7 +49,7 @@ func (u userService) VerifyOTP(otpFromUser request.OTP) error {
 	return u.userRepository.VerifyOTP(otpFromUser)
 }
 
-func (u userService) ResetUserPassword(userEmailPassword request.User) error {
+func (u userService) ResetUserPassword(userEmailPassword request.UserCredentials) error {
 	return u.userRepository.ResetUserPassword(userEmailPassword)
 }
 

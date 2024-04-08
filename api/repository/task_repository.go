@@ -20,7 +20,7 @@ type TaskRepository interface {
 	GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error)
 	//flag is used for get my created tasks and get tasks assigned to me.
 	GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error)
-	UpdateTask(taskToUpdate request.Task) error
+	UpdateTask(taskToUpdate request.UpdateTask) error
 }
 
 type taskRepository struct {
@@ -196,7 +196,7 @@ func CreateQueryForParamsOfGetTask(query string, queryParams request.TaskQueryPa
 	return query
 }
 
-func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
+func (t taskRepository) UpdateTask(taskToUpdate request.UpdateTask) error {
 	var dbTask response.Task
 	task := t.dbConn.QueryRow(context.Background(), `SELECT * FROM tasks WHERE id = $1`, taskToUpdate.ID)
 
@@ -221,7 +221,7 @@ func (t taskRepository) UpdateTask(taskToUpdate request.Task) error {
 	} else {
 		var userCount int
 		t.dbConn.QueryRow(context.Background(), `SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND member_id = $2`, dbTask.AssigneeTeam, taskToUpdate.UpdatedBy).Scan(&userCount)
-		if userCount == 0 {
+		if userCount == 0 && dbTask.CreatedBy != *taskToUpdate.UpdatedBy {
 			return errorhandling.NotAllowed
 		}
 	}

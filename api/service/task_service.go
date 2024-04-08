@@ -10,7 +10,7 @@ type TaskService interface {
 	CreateTask(taskToCreate request.Task) (int64, error)
 	GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error)
 	GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error)
-	UpdateTask(taskToUpdate request.Task) error
+	UpdateTask(taskToUpdate request.UpdateTask) error
 }
 
 type taskService struct {
@@ -35,6 +35,6 @@ func (t taskService) GetTasksofTeam(teamId int64, queryParams request.TaskQueryP
 	return t.taskRepository.GetTasksofTeam(teamId, queryParams)
 }
 
-func (t taskService) UpdateTask(taskToUpdate request.Task) error {
+func (t taskService) UpdateTask(taskToUpdate request.UpdateTask) error {
 	return t.taskRepository.UpdateTask(taskToUpdate)
 }
