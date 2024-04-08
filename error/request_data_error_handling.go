@@ -1,7 +1,6 @@
 package errorhandling
 
 import (
-	"fmt"
 	"net/http"
 
 	ut "github.com/go-playground/universal-translator"
@@ -41,7 +40,6 @@ func HandleInvalidRequestData(w http.ResponseWriter, r *http.Request, err error,
 	for _, e := range validationErrors {
 		errors = append(errors, InvalidRequestData{ParameterName: e.Field(), ErrorMessage: e.Translate(translator)})
 	}
-	fmt.Println(errors)
 
 	SendErrorResponse(r, w, CreateRequestDataValidationError(errors, http.StatusBadRequest), "")
 }

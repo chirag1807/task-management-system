@@ -15,8 +15,8 @@ import (
 
 type TeamRepository interface {
 	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error)
-	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error
-	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error
+	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembersWithTeamID) error
+	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembersWithTeamID) error
 	GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error)
 	//flag is used for get my created teams and get teams in which i was added.
 	GetTeamMembers(teamID int64, queryParams request.TeamQueryParams) ([]response.User, error)
@@ -71,7 +71,7 @@ func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers reques
 	return teamId, nil
 }
 
-func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error {
+func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembersWithTeamID) error {
 	var dbTeamCreatedBy int64
 	t.dbConn.QueryRow(context.Background(), `SELECT created_by FROM teams WHERE id = $1`, teamMembersToAdd.TeamID).Scan(&dbTeamCreatedBy)
 
@@ -141,7 +141,7 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	return nil
 }
 
-func (t teamRepository) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error {
+func (t teamRepository) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembersWithTeamID) error {
 	var dbTeamCreatedBy int64
 	t.dbConn.QueryRow(context.Background(), `SELECT created_by FROM teams WHERE id = $1`, teamMembersToRemove.TeamID).Scan(&dbTeamCreatedBy)
 

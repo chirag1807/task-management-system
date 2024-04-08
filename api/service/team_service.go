@@ -8,8 +8,8 @@ import (
 
 type TeamService interface {
 	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error)
-	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error
-	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error
+	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembersWithTeamID) error
+	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembersWithTeamID) error
 	GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error)
 	GetTeamMembers(teamID int64, queryParams request.TeamQueryParams) ([]response.User, error)
 	LeaveTeam(userID int64, teamID int64) (error)
@@ -29,11 +29,11 @@ func (t teamService) CreateTeam(teamToCreate request.Team, teamMembers request.T
 	return t.teamRepository.CreateTeam(teamToCreate, teamMembers)
 }
 
-func (t teamService) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembers) error {
+func (t teamService) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembersWithTeamID) error {
 	return t.teamRepository.AddMembersToTeam(teamCreatedBy, teamMembersToAdd)
 }
 
-func (t teamService) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembers) error {
+func (t teamService) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembersWithTeamID) error {
 	return t.teamRepository.RemoveMembersFromTeam(teamCreatedBy, teamMembersToRemove)
 }
 

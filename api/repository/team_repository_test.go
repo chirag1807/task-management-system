@@ -46,14 +46,14 @@ func TestAddMembersToTeam(t *testing.T) {
 	testCases := []struct {
 		TestCaseName  string
 		TeamCreatedBy int64
-		TeamMembers   request.TeamMembers
+		TeamMembers   request.TeamMembersWithTeamID
 		Expected      interface{}
 		StatusCode    int
 	}{
 		{
 			TestCaseName:  "Team Members Added Successfully",
 			TeamCreatedBy: 954488202459119617,
-			TeamMembers: request.TeamMembers{
+			TeamMembers: request.TeamMembersWithTeamID{
 				TeamID:   954507580144451585,
 				MemberID: []int64{954497896847212545},
 			},
@@ -63,7 +63,7 @@ func TestAddMembersToTeam(t *testing.T) {
 		{
 			TestCaseName:  "Team Member Already Exist",
 			TeamCreatedBy: 954488202459119617,
-			TeamMembers: request.TeamMembers{
+			TeamMembers: request.TeamMembersWithTeamID{
 				TeamID:   954507580144451585,
 				MemberID: []int64{954497896847212545},
 			},
@@ -73,7 +73,7 @@ func TestAddMembersToTeam(t *testing.T) {
 		{
 			TestCaseName:  "Not Allowed to Add Member",
 			TeamCreatedBy: 954488202459119618,
-			TeamMembers: request.TeamMembers{
+			TeamMembers: request.TeamMembersWithTeamID{
 				TeamID:   954507580144451585,
 				MemberID: []int64{954497896847212545},
 			},
@@ -95,14 +95,14 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 	testCases := []struct {
 		TestCaseName  string
 		TeamCreatedBy int64
-		TeamMembers   request.TeamMembers
+		TeamMembers   request.TeamMembersWithTeamID
 		Expected      interface{}
 		StatusCode    int
 	}{
 		{
 			TestCaseName:  "Team Members Added Successfully",
 			TeamCreatedBy: 954488202459119617,
-			TeamMembers: request.TeamMembers{
+			TeamMembers: request.TeamMembersWithTeamID{
 				TeamID:   954507580144451585,
 				MemberID: []int64{954497896847212545},
 			},
@@ -112,7 +112,7 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 		{
 			TestCaseName:  "Not Allowed to Removed Member",
 			TeamCreatedBy: 954488202459119618,
-			TeamMembers: request.TeamMembers{
+			TeamMembers: request.TeamMembersWithTeamID{
 				TeamID:   954507580144451585,
 				MemberID: []int64{954497896847212545},
 			},

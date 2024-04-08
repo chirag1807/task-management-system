@@ -15,6 +15,7 @@ import (
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/schema"
 )
 
 type TeamController interface {
@@ -51,23 +52,7 @@ func NewTeamController(teamService service.TeamService) TeamController {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/teams [post]
 func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.TeamNameKey:      "string|minLen:3|maxLen:15|required",
-		constant.TeamProfileKey:   "string|in:Public,Private",
-		constant.TeamMembersKey:   "required",
-		constant.TeamMembersIdKey: "slice",
-	}
 	var team request.CreateTeam
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &team, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -79,6 +64,12 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &team)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(team)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 
@@ -120,21 +111,7 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/teams/members [put]
 func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.TeamIdKey:       "number|required",
-		constant.TeamMemberIdKey: "slice|required",
-	}
-	var teamMembersToAdd request.TeamMembers
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamMembersToAdd, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
+	var teamMembersToAdd request.TeamMembersWithTeamID
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -146,6 +123,12 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 	err = json.Unmarshal(body, &teamMembersToAdd)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(teamMembersToAdd)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 
@@ -178,21 +161,7 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/teams/members [delete]
 func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Request) {
-	var requestParams = map[string]string{
-		constant.TeamIdKey:       "number|required",
-		constant.TeamMemberIdKey: "slice|required",
-	}
-	var teamMembersToRemove request.TeamMembers
-
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamMembersToRemove, &requestParams, nil, nil, nil, nil)
-	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-		return
-	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
-		return
-	}
+	var teamMembersToRemove request.TeamMembersWithTeamID
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -204,6 +173,12 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 	err = json.Unmarshal(body, &teamMembersToRemove)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		return
+	}
+
+	err = utils.Validate.Struct(teamMembersToRemove)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 
@@ -238,28 +213,23 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
 // @Router /api/v1/teams/{Flag} [get]
 func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
-	var queryParams = map[string]string{
-		constant.LimitKey:          "number|default:10",
-		constant.OffsetKey:         "number|default:0",
-		constant.SearchKey:         "string",
-		constant.SortByCreateAtKey: "bool",
-	}
-	var queryParamFilters = map[string]string{
-		constant.LimitKey:          "int",
-		constant.OffsetKey:         "int",
-		constant.SortByCreateAtKey: "bool",
-	}
-
 	var teamQueryParams request.TeamQueryParams
 
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	decoder := schema.NewDecoder()
+	err := decoder.Decode(&teamQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
 		return
 	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
+
+	err = utils.Validate.Struct(teamQueryParams)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
+	}
+
+	if teamQueryParams.Limit == 0 {
+		teamQueryParams.Limit = 10
 	}
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
@@ -302,25 +272,23 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
 // @Router /api/v1/teams/{TeamID}/members [get]
 func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
-	var queryParams = map[string]string{
-		constant.LimitKey:  "number|default:10",
-		constant.OffsetKey: "number|default:0",
-	}
-	var queryParamFilters = map[string]string{
-		constant.LimitKey:  "int",
-		constant.OffsetKey: "int",
-	}
-
 	var teamQueryParams request.TeamQueryParams
 
-	err, invalidParamsMultiLineErrMsg := utils.ValidateParameters(r, &teamQueryParams, nil, nil, &queryParams, &queryParamFilters, nil)
+	decoder := schema.NewDecoder()
+	err := decoder.Decode(&teamQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
 		return
 	}
-	if invalidParamsMultiLineErrMsg != nil {
-		errorhandling.SendErrorResponse(r, w, invalidParamsMultiLineErrMsg, "")
+
+	err = utils.Validate.Struct(teamQueryParams)
+	if err != nil {
+		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
+	}
+
+	if teamQueryParams.Limit == 0 {
+		teamQueryParams.Limit = 10
 	}
 
 	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)

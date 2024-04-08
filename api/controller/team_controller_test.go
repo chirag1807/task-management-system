@@ -121,7 +121,7 @@ func TestAddMembersToTeam(t *testing.T) {
 		t.Run(v.TestCaseName, func(t *testing.T) {
 			r.Put("/api/team/add-members-to-team", NewTeamController(teamService).AddMembersToTeam)
 
-			task := request.TeamMembers{
+			task := request.TeamMembersWithTeamID{
 				TeamID:   v.TeamID,
 				MemberID: v.MemberID,
 			}
@@ -173,7 +173,7 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 		t.Run(v.TestCaseName, func(t *testing.T) {
 			r.Put("/api/team/remove-members-from-team", NewTeamController(teamService).RemoveMembersFromTeam)
 
-			task := request.TeamMembers{
+			task := request.TeamMembersWithTeamID{
 				TeamID:   v.TeamID,
 				MemberID: v.MemberID,
 			}

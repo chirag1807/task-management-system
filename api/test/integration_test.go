@@ -209,7 +209,7 @@ func TestTeamCRUD(t *testing.T) {
 	})
 
 	t.Run("it should return ok when team members added successfully.", func(t *testing.T) {
-		teamMembers := request.TeamMembers{
+		teamMembers := request.TeamMembersWithTeamID{
 			TeamID: id,
 			MemberID: []int64{
 				954497896847212545,
@@ -247,7 +247,7 @@ func TestTeamCRUD(t *testing.T) {
 	})
 
 	t.Run("it should return ok when team members removed successfully.", func(t *testing.T) {
-		teamMembers := request.TeamMembers{
+		teamMembers := request.TeamMembersWithTeamID{
 			TeamID: id,
 			MemberID: []int64{
 				954497896847212545,
