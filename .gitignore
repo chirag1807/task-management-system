@@ -3,3 +3,7 @@
 chirag.txt
 temp.go
 vendor
+# Editor(VS & goland)
+**/.history/**
+**/.idea/**
+**/.vscode/**
