@@ -8,7 +8,7 @@ import (
 // @Description Team Details such as name, profile along with members id.
 type CreateTeam struct {
 	TeamDetails Team        `json:"teamDetails" validate:"required"`
-	TeamMembers TeamMembers `json:"teamMembers"`
+	TeamMembers TeamMembers `json:"teamMembers" validate:"omitempty"`
 }
 
 // Team model info
@@ -16,7 +16,7 @@ type CreateTeam struct {
 type Team struct {
 	ID          int64     `json:"id,omitempty" example:"954751326021189633"`
 	Name        string    `json:"name" example:"Team Jupiter" validate:"required,alphanum_with_spaces,min=3,max=15"`
-	TeamProfile *string   `json:"teamProfile,omitempty" example:"Public" validate:"oneof=Public Private"`
+	TeamProfile *string   `json:"teamProfile,omitempty" example:"Public" validate:"omitempty,oneof=Public Private"`
 	CreatedBy   int64     `json:"createdBy" example:"954751326021189799"`
 	CreatedAt   time.Time `json:"createdAt,omitempty" example:"2024-03-25T22:59:59.000Z"`
 }
@@ -24,7 +24,7 @@ type Team struct {
 // TeamMembers model info
 // @Description All members id that will be added to or removed from team.
 type TeamMembers struct {
-	MemberID []int64 `json:"memberID" example:"954751326021189800,954751326021189801" validate:"required,slice_of_numbers"`
+	MemberID []int64 `json:"memberID" example:"954751326021189800,954751326021189801" validate:"slice_of_numbers"`
 }
 
 // TeamMembers model info

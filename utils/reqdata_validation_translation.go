@@ -68,7 +68,7 @@ func InitReqDataValidationTranslation() {
 	})
 
 	Validate.RegisterTranslation("slice_of_numbers", Translator, func(ut ut.Translator) error {
-		return ut.Add("slice_of_numbers", "{0} field must be slice of numbers only.", true)
+		return ut.Add("slice_of_numbers", "{0} field must be slice of numbers only and must contain at least 1 value.", true)
 	}, func(ut ut.Translator, fe validator.FieldError) string {
 		t, _ := ut.T("slice_of_numbers", fe.Field(), fe.Param())
 		return t
@@ -127,7 +127,10 @@ func CustomAlphaNumWithSpaceValidator(fl validator.FieldLevel) bool {
 
 func CustomSliceOfNumberValidator(fl validator.FieldLevel) bool {
 	slice := fl.Field()
-	if reflect.TypeOf(slice).Kind() != reflect.Slice {
+	if slice.Kind() != reflect.Slice {
+		return false
+	}
+	if slice.Len() == 0 {
 		return false
 	}
 	for i := 0; i < slice.Len(); i++ {

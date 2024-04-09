@@ -2,6 +2,7 @@ package errorhandling
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/chirag1807/task-management-system/config"
@@ -21,6 +22,7 @@ func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, messag
 		w.WriteHeader(error.StatusCode)
 		config.LoggerInstance.Warning(err.Error())
 	} else {
+		log.Println(err, message, params)
 		err = CustomError{
 			StatusCode:   http.StatusInternalServerError,
 			ErrorMessage: "Internal Server Error",

@@ -85,7 +85,9 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 		query += `$` + strconv.Itoa(i+1) + `, `
 		args = append(args, v)
 	}
-	query = query[:len(query)-2]
+	if len(teamMembersToAdd.MemberID) > 0 {
+		query = query[:len(query)-2]
+	}
 	query += `)`
 
 	users, err := t.dbConn.Query(context.Background(), query, args...)
@@ -155,7 +157,9 @@ func (t teamRepository) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersTo
 		query += `$` + strconv.Itoa(i+1) + `, `
 		args = append(args, v)
 	}
-	query = query[:len(query)-2]
+	if len(teamMembersToRemove.MemberID) > 0 {
+		query = query[:len(query)-2]
+	}
 	query += `)`
 
 	_, err := t.dbConn.Exec(context.Background(), query, args...)
