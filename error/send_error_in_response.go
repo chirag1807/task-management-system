@@ -21,13 +21,13 @@ func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, messag
 		w.WriteHeader(error.StatusCode)
 		config.LoggerInstance.Warning(err.Error())
 	} else {
+		config.LoggerInstance.Error(r, err, message, params...)
 		err = CustomError{
 			StatusCode:   http.StatusInternalServerError,
 			ErrorMessage: "Internal Server Error",
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusInternalServerError)
-		config.LoggerInstance.Error(r, err, message, params...)
 	}
 
 	json.NewEncoder(w).Encode(err)

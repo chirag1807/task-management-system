@@ -625,12 +625,19 @@ const docTemplate = `{
                         "in": "formData"
                     },
                     {
+                        "maxLength": 15,
+                        "minLength": 3,
                         "type": "string",
                         "example": "Team Jupiter",
                         "name": "name",
-                        "in": "formData"
+                        "in": "formData",
+                        "required": true
                     },
                     {
+                        "enum": [
+                            "Public",
+                            "Private"
+                        ],
                         "type": "string",
                         "example": "Public",
                         "name": "teamProfile",
@@ -647,12 +654,6 @@ const docTemplate = `{
                             954751326021189801
                         ],
                         "name": "memberID",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "integer",
-                        "example": 954751326021189633,
-                        "name": "teamID",
                         "in": "formData"
                     }
                 ],
@@ -1411,11 +1412,11 @@ const docTemplate = `{
         "errorhandling.CustomError": {
             "type": "object",
             "properties": {
-                "errorMessage": {
+                "error": {
                     "type": "string",
                     "example": "Corresponding Error Message will Show Here"
                 },
-                "statusCode": {
+                "statuscode": {
                     "type": "integer",
                     "example": 0
                 }

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -68,6 +69,8 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
 	err = utils.Validate.Struct(userRequest)
 	if err != nil {
 		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
@@ -124,6 +127,8 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
+
+	r.Body = io.NopCloser(bytes.NewReader(body))
 
 	err = utils.Validate.Struct(userLoginRequest)
 	if err != nil {

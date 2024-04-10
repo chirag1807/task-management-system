@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"math/rand"
@@ -139,6 +140,8 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
 	err = utils.Validate.Struct(userToUpdate)
 	if err != nil {
 		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
@@ -201,6 +204,8 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
 	err = utils.Validate.Struct(userEmail)
 	if err != nil {
 		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
@@ -262,6 +267,8 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
 	err = utils.Validate.Struct(otp)
 	if err != nil {
 		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
@@ -306,6 +313,8 @@ func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
+
+	r.Body = io.NopCloser(bytes.NewReader(body))
 
 	err = utils.Validate.Struct(userEmailPassword)
 	if err != nil {

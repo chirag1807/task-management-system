@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -70,6 +71,8 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
+
+	r.Body = io.NopCloser(bytes.NewReader(body))
 
 	err = utils.Validate.Struct(taskToCreate)
 	if err != nil {
@@ -253,6 +256,8 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
+
+	r.Body = io.NopCloser(bytes.NewReader(body))
 
 	err = utils.Validate.Struct(taskToUpdate)
 	if err != nil {

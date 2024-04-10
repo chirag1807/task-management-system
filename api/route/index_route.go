@@ -6,6 +6,7 @@ import (
 	"github.com/chirag1807/task-management-system/api/repository"
 	"github.com/chirag1807/task-management-system/api/service"
 	"github.com/chirag1807/task-management-system/utils/socket"
+	chi_middleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/go-redis/redis/v8"
@@ -22,6 +23,7 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn 
 		AllowCredentials: true,
 	})
 	socket.SocketEvents(socketServer)
+	router.Use(chi_middleware.Logger)
 	router.Handle("/socket.io/", c.Handler(socketServer))
 
 	authRepository := repository.NewAuthRepo(dbConn)

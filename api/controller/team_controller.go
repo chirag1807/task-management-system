@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -67,6 +68,8 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
 	err = utils.Validate.Struct(team)
 	if err != nil {
 		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
@@ -126,6 +129,8 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	r.Body = io.NopCloser(bytes.NewReader(body))
+
 	err = utils.Validate.Struct(teamMembersToAdd)
 	if err != nil {
 		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
@@ -175,6 +180,8 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
 		return
 	}
+
+	r.Body = io.NopCloser(bytes.NewReader(body))
 
 	err = utils.Validate.Struct(teamMembersToRemove)
 	if err != nil {

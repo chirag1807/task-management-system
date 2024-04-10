@@ -2,10 +2,10 @@ basePath: /
 definitions:
   errorhandling.CustomError:
     properties:
-      errorMessage:
+      error:
         example: Corresponding Error Message will Show Here
         type: string
-      statusCode:
+      statuscode:
         example: 0
         type: integer
     type: object
@@ -595,9 +595,15 @@ paths:
         type: integer
       - example: Team Jupiter
         in: formData
+        maxLength: 15
+        minLength: 3
         name: name
+        required: true
         type: string
-      - example: Public
+      - enum:
+        - Public
+        - Private
+        example: Public
         in: formData
         name: teamProfile
         type: string
@@ -610,10 +616,6 @@ paths:
           type: integer
         name: memberID
         type: array
-      - example: 954751326021189633
-        in: formData
-        name: teamID
-        type: integer
       produces:
       - application/json
       responses:
