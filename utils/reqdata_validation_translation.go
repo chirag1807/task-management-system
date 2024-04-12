@@ -95,6 +95,13 @@ func InitReqDataValidationTranslation() {
 		return t
 	})
 
+	Validate.RegisterTranslation("gte", Translator, func(ut ut.Translator) error {
+		return ut.Add("max", "{0} field must be greater than {1}.", true)
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("max", fe.Field(), fe.Param())
+		return t
+	})
+
 	Validate.RegisterTranslation("email", Translator, func(ut ut.Translator) error {
 		return ut.Add("email", "{0} must be a valid email address", true)
 	}, func(ut ut.Translator, fe validator.FieldError) string {

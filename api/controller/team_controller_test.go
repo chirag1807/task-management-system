@@ -21,15 +21,15 @@ func TestCreateTeam(t *testing.T) {
 		TestCaseName string
 		Name         string
 		CreatedBy    int64
-		TeamProfile  *string
-		MemberID     []int64
+		Privacy  *string
+		MemberIDs     []int64
 		Expected     interface{}
 		StatusCode   int
 	}{
 		{
 			TestCaseName: "Team Created Successfully",
 			Name:         "Team Mahakal",
-			MemberID:     []int64{954497896847212545},
+			MemberIDs:     []int64{954497896847212545},
 			CreatedBy:    954488202459119617,
 			StatusCode:   200,
 		},
@@ -47,7 +47,7 @@ func TestCreateTeam(t *testing.T) {
 		{
 			TestCaseName: "Value Must be in Enum Values.",
 			Name:         "Team Mahakal",
-			TeamProfile:  func() *string { team_profile := string("Protected"); return &team_profile }(),
+			Privacy:  func() *string { team_privacy := string("Protected"); return &team_privacy }(),
 			CreatedBy:    954488202459119617,
 			StatusCode:   400,
 		},
@@ -58,13 +58,11 @@ func TestCreateTeam(t *testing.T) {
 			r.Post("/api/team/create-team", NewTeamController(teamService).CreateTeam)
 
 			task := request.CreateTeam{
-				TeamDetails: request.Team{
+				Details: request.Team{
 					Name:        v.Name,
-					TeamProfile: v.TeamProfile,
+					Privacy: v.Privacy,
 				},
-				TeamMembers: request.TeamMembers{
-					MemberID: v.MemberID,
-				},
+				Members: v.MemberIDs,
 			}
 			jsonValue, err := json.Marshal(task)
 			if err != nil {
@@ -123,7 +121,7 @@ func TestAddMembersToTeam(t *testing.T) {
 
 			task := request.TeamMembersWithTeamID{
 				TeamID:   v.TeamID,
-				MemberID: v.MemberID,
+				MemberIDs: v.MemberID,
 			}
 			jsonValue, err := json.Marshal(task)
 			if err != nil {
@@ -175,7 +173,7 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 
 			task := request.TeamMembersWithTeamID{
 				TeamID:   v.TeamID,
-				MemberID: v.MemberID,
+				MemberIDs: v.MemberID,
 			}
 			jsonValue, err := json.Marshal(task)
 			if err != nil {
@@ -214,7 +212,7 @@ func TestGetAllTeams(t *testing.T) {
 				Limit:          1,
 				Offset:         0,
 				Search:         "",
-				SortByCreateAt: true,
+				SortByCreatedAt: true,
 			},
 			StatusCode: 200,
 		},
@@ -226,7 +224,7 @@ func TestGetAllTeams(t *testing.T) {
 				Limit:          1,
 				Offset:         0,
 				Search:         "",
-				SortByCreateAt: true,
+				SortByCreatedAt: true,
 			},
 			StatusCode: 200,
 		},
@@ -251,7 +249,7 @@ func TestGetAllTeams(t *testing.T) {
 			q.Add("limit", strconv.Itoa(v.QueryParams.Limit))
 			q.Add("offset", strconv.Itoa(v.QueryParams.Offset))
 			q.Add("search", v.QueryParams.Search)
-			q.Add("sortByCreatedAt", strconv.FormatBool(v.QueryParams.SortByCreateAt))
+			q.Add("sortByCreatedAt", strconv.FormatBool(v.QueryParams.SortByCreatedAt))
 			req.URL.RawQuery = q.Encode()
 
 			w := httptest.NewRecorder()

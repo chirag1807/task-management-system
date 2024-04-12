@@ -9,7 +9,7 @@ import (
 type AuthService interface {
 	UserRegistration(user request.User) (int64, error)
 	UserLogin(user request.UserCredentials) (response.User, string, error)
-	ResetToken(refreshToken string) (int64, error)
+	RefreshToken(refreshToken string) (int64, string, error)
 }
 
 type authService struct {
@@ -30,6 +30,6 @@ func (a authService) UserLogin(user request.UserCredentials) (response.User, str
 	return a.authRepository.UserLogin(user)
 }
 
-func (a authService) ResetToken(refreshToken string) (int64, error) {
-	return a.authRepository.ResetToken(refreshToken)
+func (a authService) RefreshToken(refreshToken string) (int64, string, error) {
+	return a.authRepository.RefreshToken(refreshToken)
 }

@@ -58,8 +58,8 @@ func TestMain(m *testing.M) {
 
 func InsertMockData(tx pgx.Tx) (pgx.Tx, error) {
 	batch := &pgx.Batch{}
-	batch.Queue("INSERT INTO users (first_name, last_name, bio, email, password, profile) VALUES('Aashutosh', 'Gupta', 'Junior Software Engineer at ZURU TECH INDIA', 'guptaaahutosh354@gmail.com', '$2a$14$FhDiMSnCN8sJ7Tb0UDBXn.bbKVYF3b4ZVwEwPXfAzvDgXZlC3B1g2', 'Public');")
-	batch.Queue("INSERT INTO tasks (title, description, deadline, assignee_team, status, priority, created_by, created_at) VALUES('task2', 'this is task2', '2024-03-30T22:59:59.000Z', 954507580144451585, 'TO-DO', 'Very High', 954488202459119617, current_timestamp());")
+	batch.Queue("INSERT INTO users (first_name, last_name, bio, email, password, privacy) VALUES('Aashutosh', 'Gupta', 'Junior Software Engineer at ZURU TECH INDIA', 'guptaaahutosh354@gmail.com', '$2a$14$FhDiMSnCN8sJ7Tb0UDBXn.bbKVYF3b4ZVwEwPXfAzvDgXZlC3B1g2', 'PUBLIC');")
+	batch.Queue("INSERT INTO tasks (title, description, deadline, assignee_team, status, priority, created_by, created_at) VALUES('task2', 'this is task2', '2024-03-30T22:59:59.000Z', 954507580144451585, 'TO-DO', 'VERY HIGH', 954488202459119617, current_timestamp());")
 	results := tx.SendBatch(context.Background(), batch)
 	defer results.Close()
 

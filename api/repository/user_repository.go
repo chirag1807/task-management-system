@@ -8,6 +8,7 @@ import (
 	"github.com/chirag1807/task-management-system/api/model/dto"
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
+	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/chirag1807/task-management-system/utils"
 	"github.com/jackc/pgx/v5"
@@ -16,7 +17,7 @@ import (
 )
 
 type UserRepository interface {
-	GetAllPublicProfileUsers(queryParams request.UserQueryParams) ([]response.User, error)
+	GetAllPublicPrivacyUsers(queryParams request.UserQueryParams) ([]response.User, error)
 	GetMyDetails(userId int64) (response.User, error)
 	UpdateUserProfile(userId int64, userToUpdate request.UpdateUser) error
 	SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTime time.Time) (int64, error)
@@ -37,10 +38,10 @@ func NewUserRepo(dbConn *pgx.Conn, rabbitmqConn *amqp.Connection) UserRepository
 	}
 }
 
-func (u userRepository) GetAllPublicProfileUsers(queryParams request.UserQueryParams) ([]response.User, error) {
-	query := `SELECT * FROM users WHERE profile = $1`
+func (u userRepository) GetAllPublicPrivacyUsers(queryParams request.UserQueryParams) ([]response.User, error) {
+	query := `SELECT * FROM users WHERE privacy = $1`
 	query = CreateQueryForParamsOfGetUser(query, queryParams)
-	publicUsers, err := u.dbConn.Query(context.Background(), query, "Public")
+	publicUsers, err := u.dbConn.Query(context.Background(), query, "PUBLIC")
 	publicUsersSlice := make([]response.User, 0)
 	if err != nil {
 		return publicUsersSlice, err
@@ -49,7 +50,7 @@ func (u userRepository) GetAllPublicProfileUsers(queryParams request.UserQueryPa
 
 	var publicUser response.User
 	for publicUsers.Next() {
-		if err := publicUsers.Scan(&publicUser.ID, &publicUser.FirstName, &publicUser.LastName, &publicUser.Bio, &publicUser.Email, &publicUser.Password, &publicUser.Profile); err != nil {
+		if err := publicUsers.Scan(&publicUser.ID, &publicUser.FirstName, &publicUser.LastName, &publicUser.Bio, &publicUser.Email, &publicUser.Password, &publicUser.Privacy); err != nil {
 			return publicUsersSlice, err
 		}
 		publicUsersSlice = append(publicUsersSlice, publicUser)
@@ -58,7 +59,7 @@ func (u userRepository) GetAllPublicProfileUsers(queryParams request.UserQueryPa
 }
 
 func CreateQueryForParamsOfGetUser(query string, queryParams request.UserQueryParams) string {
-	if queryParams.Search != "" {
+	if queryParams.Search != constant.EMPTY_STRING {
 		query += fmt.Sprintf(" AND (first_name ILIKE '%%%s%%' OR last_name ILIKE '%%%s%%' OR bio ILIKE '%%%s%%')",
 			queryParams.Search, queryParams.Search, queryParams.Search)
 	}
@@ -70,10 +71,10 @@ func CreateQueryForParamsOfGetUser(query string, queryParams request.UserQueryPa
 func (u userRepository) GetMyDetails(userId int64) (response.User, error) {
 	var userDetails response.User
 	user := u.dbConn.QueryRow(context.Background(), `SELECT * FROM users WHERE id = $1`, userId)
-	err := user.Scan(&userDetails.ID, &userDetails.FirstName, &userDetails.LastName, &userDetails.Bio, &userDetails.Email, &userDetails.Password, &userDetails.Profile)
+	err := user.Scan(&userDetails.ID, &userDetails.FirstName, &userDetails.LastName, &userDetails.Bio, &userDetails.Email, &userDetails.Password, &userDetails.Privacy)
 
 	if err != nil {
-		if err.Error() == "no rows in result set" {
+		if err.Error() == constant.PG_NO_ROWS {
 			return userDetails, errorhandling.NoUserFound
 		}
 		return userDetails, err
@@ -82,11 +83,15 @@ func (u userRepository) GetMyDetails(userId int64) (response.User, error) {
 }
 
 func (u userRepository) UpdateUserProfile(userId int64, userToUpdate request.UpdateUser) error {
-	if userToUpdate.Profile == "Private" {
+	if userToUpdate.Privacy == "PRIVATE" {
 		var userCount int
-		u.dbConn.QueryRow(context.Background(), `SELECT COUNT(*) FROM team_members where member_id = $1`, userId).Scan(&userCount)
+		rows := u.dbConn.QueryRow(context.Background(), `SELECT COUNT(*) FROM team_members where member_id = $1`, userId)
+		err := rows.Scan(&userCount)
+		if err != nil {
+			return err
+		}
 		if userCount > 0 {
-			return errorhandling.LeftAllTeamsToMakeProfilePrivate
+			return errorhandling.LeftAllTeamsToMakePrivacyPrivate
 		}
 	}
 	query, args, err := UpdateQuery("users", userToUpdate, userId, 0)
@@ -96,7 +101,7 @@ func (u userRepository) UpdateUserProfile(userId int64, userToUpdate request.Upd
 	_, err = u.dbConn.Exec(context.Background(), query, args...)
 	if err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
-		if ok && pgErr.Code == "23505" {
+		if ok && pgErr.Code == constant.PG_Duplicate_Error_Code {
 			return errorhandling.DuplicateEmailFound
 		}
 		return err
@@ -108,7 +113,11 @@ func (u userRepository) SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTim
 	ctx := context.Background()
 	var databaseOTPId int64
 	var userCount int
-	u.dbConn.QueryRow(ctx, `SELECT COUNT(*) FROM users where email = $1`, userEmail.To).Scan(&userCount)
+	rows := u.dbConn.QueryRow(ctx, `SELECT COUNT(*) FROM users where email = $1`, userEmail.To)
+	err := rows.Scan(&userCount)
+	if err != nil {
+		return 0, err
+	}
 	if userCount == 0 {
 		return 0, errorhandling.NoEmailFound
 	}
@@ -116,7 +125,8 @@ func (u userRepository) SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTim
 	if err != nil {
 		return 0, err
 	}
-	err = tx.QueryRow(ctx, `INSERT INTO otps (otp, otp_expire_time) VALUES ($1, $2) RETURNING id`, OTP, OTPExpireTime).Scan(&databaseOTPId)
+	rows = tx.QueryRow(ctx, `INSERT INTO otps (otp, otp_expire_time) VALUES ($1, $2) RETURNING id`, OTP, OTPExpireTime)
+	err = rows.Scan(&databaseOTPId)
 	if err != nil {
 		tx.Rollback(ctx)
 		return 0, err
@@ -175,7 +185,7 @@ func (u userRepository) VerifyUserPassword(userPassword string, userId int64) er
 	row := u.dbConn.QueryRow(context.Background(), `SELECT password FROM users WHERE id = $1`, userId)
 	err := row.Scan(&dbUser.Password)
 
-	if err != nil && err.Error() == "no rows in result set" {
+	if err != nil && err.Error() == constant.PG_NO_ROWS {
 		return errorhandling.NoUserFound
 	}
 

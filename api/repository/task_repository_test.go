@@ -61,7 +61,6 @@ func TestCreateTask(t *testing.T) {
 func TestGetAllTasks(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
-		Flag         int
 		UserId       int64
 		QueryParams  request.TaskQueryParams
 		Expected     interface{}
@@ -69,9 +68,9 @@ func TestGetAllTasks(t *testing.T) {
 	}{
 		{
 			TestCaseName: "Task Created By Me - Success",
-			Flag:         0,
 			UserId:       954488202459119617,
 			QueryParams: request.TaskQueryParams{
+				CreatedByMe: false,
 				Limit:        1,
 				Offset:       0,
 				Search:       "",
@@ -83,9 +82,9 @@ func TestGetAllTasks(t *testing.T) {
 		},
 		{
 			TestCaseName: "Task Assigned To Me - Success",
-			Flag:         1,
 			UserId:       954488202459119617,
 			QueryParams: request.TaskQueryParams{
+				CreatedByMe: true,
 				Limit:        1,
 				Offset:       0,
 				Search:       "",
@@ -100,7 +99,7 @@ func TestGetAllTasks(t *testing.T) {
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
 
-			_, err := NewTaskRepo(dbConn, redisClient, socketServer).GetAllTasks(v.UserId, v.Flag, v.QueryParams)
+			_, err := NewTaskRepo(dbConn, redisClient, socketServer).GetAllTasks(v.UserId, v.QueryParams)
 			assert.Equal(t, v.Expected, err)
 		})
 	}

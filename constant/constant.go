@@ -1,6 +1,7 @@
 package constant
 
 const (
+	EMPTY_STRING              = ""
 	INVALID_TOKEN             = "This Token is Invalid"
 	INVALID_CLAIMS            = "Token Cliams are Invalid"
 	LEAVE_TEAM                = "Team Left Successfully."
@@ -15,6 +16,12 @@ const (
 	USER_LOGIN_SUCCEED        = "User Login Done Successfully."
 	USER_PROFILE_UPDATED      = "User Profile Updated Successfully."
 	USER_MAIL_QUEUE           = "user-mail-queue"
+	OTP_VERIFICATION_SUCCEED  = "OTP Verification Done Successfully, You can proceed Further."
+)
+
+const (
+	PG_Duplicate_Error_Code = "23505"
+	PG_NO_ROWS = "no rows in result set"
 )
 
 type contextKey string
@@ -25,46 +32,8 @@ var (
 	SocketServerKey = contextKey("socketServer")
 )
 
-// below I have declared keys for body, query params and url params validations.
-const (
-	// For User Model
-	IdKey        = "id"
-	FirstNameKey = "firstName"
-	LastNameKey  = "lastName"
-	BioKey       = "bio"
-	EmailKey     = "email"
-	PasswordKey  = "password"
-	ProfileKey   = "profile"
-
-	// For OTP Model
-	OTPIdKey   = "id"
-	OTPCodeKey = "otp"
-
-	// For Team Model
-	TeamNameKey      = "teamDetails.name"
-	TeamProfileKey   = "teamDetails.teamProfile"
-	TeamMembersKey   = "teamMembers"
-	TeamMembersIdKey = "teamMembers.memberID"
-
-	// For Team Members Model
-	TeamIdKey       = "teamID"
-	TeamMemberIdKey = "memberID"
-
-	// For Task Model
-	TaskIdKey             = "id"
-	TitleKey              = "title"
-	DescriptionKey        = "description"
-	DeadlineKey           = "deadline"
-	AssigneeIndividualKey = "assigneeIndividual"
-	AssigneeTeamKey       = "assigneeTeam"
-	StatusKey             = "status"
-	PriorityKey           = "priority"
-
-	// For Query Params
-	LimitKey          = "limit"
-	OffsetKey         = "offset"
-	SearchKey         = "search"
-	StatusFilterKey   = "status"
-	SortByFilterKey   = "sortByFilter"
-	SortByCreateAtKey = "sortByCreatedAt"
+var (
+	TEAM_ID                 = "TeamID"
+	TASK_ID                 = "TaskID"
+	URL_PARAM_CONVERT_ERROR = "strconv.Atoi: parsing"
 )

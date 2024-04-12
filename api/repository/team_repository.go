@@ -7,6 +7,7 @@ import (
 
 	"github.com/chirag1807/task-management-system/api/model/request"
 	"github.com/chirag1807/task-management-system/api/model/response"
+	"github.com/chirag1807/task-management-system/constant"
 	errorhandling "github.com/chirag1807/task-management-system/error"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5"
@@ -14,13 +15,13 @@ import (
 )
 
 type TeamRepository interface {
-	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error)
+	CreateTeam(teamToCreate request.Team, teamMembers []int64) (int64, error)
 	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembersWithTeamID) error
 	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembersWithTeamID) error
-	GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error)
+	GetAllTeams(userID int64, queryParams request.TeamQueryParams) ([]response.Team, error)
 	//flag is used for get my created teams and get teams in which i was added.
-	GetTeamMembers(teamID int64, queryParams request.TeamQueryParams) ([]response.User, error)
-	LeftTeam(userID int64, teamID int64) error
+	GetTeamMembers(teamId int64, queryParams request.TeamQueryParams) ([]response.User, error)
+	LeaveTeam(userID int64, teamId int64) error
 }
 
 type teamRepository struct {
@@ -35,21 +36,22 @@ func NewTeamRepo(dbConn *pgx.Conn, redisClient *redis.Client) TeamRepository {
 	}
 }
 
-func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error) {
+func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers []int64) (int64, error) {
 	ctx := context.Background()
 	tx, err := t.dbConn.Begin(ctx)
 	if err != nil {
 		return 0, err
 	}
 	var teamId int64
-	err = tx.QueryRow(ctx, `INSERT INTO teams (name, team_profile, created_by) VALUES ($1, $2, $3) RETURNING id`, teamToCreate.Name, teamToCreate.TeamProfile, teamToCreate.CreatedBy).Scan(&teamId)
+	rows := tx.QueryRow(ctx, `INSERT INTO teams (name, team_privacy, created_by) VALUES ($1, $2, $3) RETURNING id`, teamToCreate.Name, teamToCreate.Privacy, teamToCreate.CreatedBy)
+	err = rows.Scan(&teamId)
 	if err != nil {
 		tx.Rollback(ctx)
 		return teamId, err
 	}
 
 	batch := &pgx.Batch{}
-	for _, v := range teamMembers.MemberID {
+	for _, v := range teamMembers {
 		batch.Queue(`INSERT INTO team_members (team_id, member_id) VALUES ($1, $2)`, teamId, v)
 	}
 	results := tx.SendBatch(ctx, batch)
@@ -64,7 +66,7 @@ func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers reques
 		return teamId, err
 	}
 
-	for _, v := range teamMembers.MemberID {
+	for _, v := range teamMembers {
 		t.redisClient.SAdd(ctx, "user:"+strconv.FormatInt(v, 10)+":teams", teamId)
 	}
 
@@ -73,19 +75,23 @@ func (t teamRepository) CreateTeam(teamToCreate request.Team, teamMembers reques
 
 func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembersWithTeamID) error {
 	var dbTeamCreatedBy int64
-	t.dbConn.QueryRow(context.Background(), `SELECT created_by FROM teams WHERE id = $1`, teamMembersToAdd.TeamID).Scan(&dbTeamCreatedBy)
+	rows := t.dbConn.QueryRow(context.Background(), `SELECT created_by FROM teams WHERE id = $1`, teamMembersToAdd.TeamID)
+	err := rows.Scan(&dbTeamCreatedBy)
+	if err != nil {
+		return err
+	}
 
 	if dbTeamCreatedBy != teamCreatedBy {
 		return errorhandling.NotAllowed
 	}
 
 	var args []interface{}
-	query := `SELECT profile FROM users WHERE id IN (`
-	for i, v := range teamMembersToAdd.MemberID {
+	query := `SELECT privacy FROM users WHERE id IN (`
+	for i, v := range teamMembersToAdd.MemberIDs {
 		query += `$` + strconv.Itoa(i+1) + `, `
 		args = append(args, v)
 	}
-	if len(teamMembersToAdd.MemberID) > 0 {
+	if len(teamMembersToAdd.MemberIDs) > 0 {
 		query = query[:len(query)-2]
 	}
 	query += `)`
@@ -98,10 +104,10 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 
 	var user response.User
 	for users.Next() {
-		if err := users.Scan(&user.Profile); err != nil {
+		if err := users.Scan(&user.Privacy); err != nil {
 			return err
 		}
-		if user.Profile == "Private" {
+		if user.Privacy == "PRIVATE" {
 			return errorhandling.OnlyPublicMemberAllowed
 		}
 	}
@@ -113,7 +119,7 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	}
 
 	batch := &pgx.Batch{}
-	for _, v := range teamMembersToAdd.MemberID {
+	for _, v := range teamMembersToAdd.MemberIDs {
 		batch.Queue(`INSERT INTO team_members (team_id, member_id) VALUES ($1, $2)`, teamMembersToAdd.TeamID, v)
 	}
 	results := tx.SendBatch(ctx, batch)
@@ -122,7 +128,7 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	if err := results.Close(); err != nil {
 		tx.Rollback(ctx)
 		pgErr, ok := err.(*pgconn.PgError)
-		if ok && pgErr.Code == "23505" {
+		if ok && pgErr.Code == constant.PG_Duplicate_Error_Code {
 			return errorhandling.MemberExist
 		}
 		return err
@@ -130,13 +136,13 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 	if err := tx.Commit(ctx); err != nil {
 		tx.Rollback(ctx)
 		pgErr, ok := err.(*pgconn.PgError)
-		if ok && pgErr.Code == "23505" {
+		if ok && pgErr.Code == constant.PG_Duplicate_Error_Code {
 			return errorhandling.MemberExist
 		}
 		return err
 	}
 
-	for _, v := range teamMembersToAdd.MemberID {
+	for _, v := range teamMembersToAdd.MemberIDs {
 		t.redisClient.SAdd(ctx, "user:"+strconv.FormatInt(v, 10)+":teams", teamMembersToAdd.TeamID)
 	}
 
@@ -145,48 +151,51 @@ func (t teamRepository) AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd r
 
 func (t teamRepository) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembersWithTeamID) error {
 	var dbTeamCreatedBy int64
-	t.dbConn.QueryRow(context.Background(), `SELECT created_by FROM teams WHERE id = $1`, teamMembersToRemove.TeamID).Scan(&dbTeamCreatedBy)
-
+	rows := t.dbConn.QueryRow(context.Background(), `SELECT created_by FROM teams WHERE id = $1`, teamMembersToRemove.TeamID)
+	err := rows.Scan(&dbTeamCreatedBy)
+	if err != nil {
+		return err
+	}
 	if dbTeamCreatedBy != teamCreatedBy {
 		return errorhandling.NotAllowed
 	}
 
 	var args []interface{}
 	query := `DELETE FROM team_members WHERE member_id IN (`
-	for i, v := range teamMembersToRemove.MemberID {
+	for i, v := range teamMembersToRemove.MemberIDs {
 		query += `$` + strconv.Itoa(i+1) + `, `
 		args = append(args, v)
 	}
-	if len(teamMembersToRemove.MemberID) > 0 {
+	if len(teamMembersToRemove.MemberIDs) > 0 {
 		query = query[:len(query)-2]
 	}
 	query += `)`
 
-	_, err := t.dbConn.Exec(context.Background(), query, args...)
+	_, err = t.dbConn.Exec(context.Background(), query, args...)
 	if err != nil {
 		return err
 	}
 
-	for _, v := range teamMembersToRemove.MemberID {
+	for _, v := range teamMembersToRemove.MemberIDs {
 		t.redisClient.SRem(context.Background(), "user:"+strconv.FormatInt(v, 10)+":teams", teamMembersToRemove.TeamID)
 	}
 
 	return nil
 }
 
-func (t teamRepository) GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error) {
+func (t teamRepository) GetAllTeams(userID int64, queryParams request.TeamQueryParams) ([]response.Team, error) {
 	//flag = 0 => created by me, flag = 1 => i am member
 	var teams pgx.Rows
 	var err error
 	teamsSlice := make([]response.Team, 0)
 
 	var query string
-	if flag == 0 {
+	if !queryParams.CreatedByMe {
 		query = `SELECT * FROM teams WHERE created_by = $1 AND true`
 		query = CreateQueryForParamsOfGetTeam(query, queryParams)
 		teams, err = t.dbConn.Query(context.Background(), query, userID)
 	}
-	if flag == 1 {
+	if queryParams.CreatedByMe {
 		query = `SELECT * FROM teams WHERE id IN (SELECT team_id from team_members where member_id = $1)`
 		query = CreateQueryForParamsOfGetTeam(query, queryParams)
 		teams, err = t.dbConn.Query(context.Background(), query, userID)
@@ -199,7 +208,7 @@ func (t teamRepository) GetAllTeams(userID int64, flag int, queryParams request.
 
 	var team response.Team
 	for teams.Next() {
-		if err := teams.Scan(&team.ID, &team.Name, &team.CreatedBy, &team.CreatedAt, &team.TeamProfile); err != nil {
+		if err := teams.Scan(&team.ID, &team.Name, &team.CreatedBy, &team.CreatedAt, &team.TeamPrivacy); err != nil {
 			return teamsSlice, err
 		}
 		teamsSlice = append(teamsSlice, team)
@@ -208,14 +217,14 @@ func (t teamRepository) GetAllTeams(userID int64, flag int, queryParams request.
 	return teamsSlice, nil
 }
 
-func (t teamRepository) GetTeamMembers(teamID int64, queryParams request.TeamQueryParams) ([]response.User, error) {
+func (t teamRepository) GetTeamMembers(teamId int64, queryParams request.TeamQueryParams) ([]response.User, error) {
 	var teamMembers pgx.Rows
 	var err error
 	teamMembersSlice := make([]response.User, 0)
 
-	query := `SELECT id, first_name, last_name, bio, email, profile FROM users WHERE id IN (SELECT member_id from team_members where team_id = $1)`
+	query := `SELECT id, first_name, last_name, bio, email, privacy FROM users WHERE id IN (SELECT member_id from team_members where team_id = $1)`
 	query = CreateQueryForParamsOfGetTeam(query, queryParams)
-	teamMembers, err = t.dbConn.Query(context.Background(), query, teamID)
+	teamMembers, err = t.dbConn.Query(context.Background(), query, teamId)
 
 	if err != nil {
 		return teamMembersSlice, err
@@ -224,7 +233,7 @@ func (t teamRepository) GetTeamMembers(teamID int64, queryParams request.TeamQue
 
 	var teamMember response.User
 	for teamMembers.Next() {
-		if err := teamMembers.Scan(&teamMember.ID, &teamMember.FirstName, &teamMember.LastName, &teamMember.Bio, &teamMember.Email, &teamMember.Profile); err != nil {
+		if err := teamMembers.Scan(&teamMember.ID, &teamMember.FirstName, &teamMember.LastName, &teamMember.Bio, &teamMember.Email, &teamMember.Privacy); err != nil {
 			return teamMembersSlice, err
 		}
 		teamMembersSlice = append(teamMembersSlice, teamMember)
@@ -234,10 +243,10 @@ func (t teamRepository) GetTeamMembers(teamID int64, queryParams request.TeamQue
 }
 
 func CreateQueryForParamsOfGetTeam(query string, queryParams request.TeamQueryParams) string {
-	if queryParams.Search != "" {
+	if queryParams.Search != constant.EMPTY_STRING {
 		query += fmt.Sprintf(" AND (name ILIKE '%%%s%%')", queryParams.Search)
 	}
-	if queryParams.SortByCreateAt {
+	if queryParams.SortByCreatedAt {
 		query += " ORDER BY created_at"
 	}
 	query += fmt.Sprintf(" LIMIT %d", queryParams.Limit)
@@ -245,14 +254,14 @@ func CreateQueryForParamsOfGetTeam(query string, queryParams request.TeamQueryPa
 	return query
 }
 
-func (t teamRepository) LeftTeam(userID int64, teamID int64) error {
-	a, err := t.dbConn.Exec(context.Background(), "DELETE FROM team_members WHERE member_id = $1 AND team_id = $2", userID, teamID)
+func (t teamRepository) LeaveTeam(userID int64, teamId int64) error {
+	a, err := t.dbConn.Exec(context.Background(), "DELETE FROM team_members WHERE member_id = $1 AND team_id = $2", userID, teamId)
 	if a.RowsAffected() == 0 {
 		return errorhandling.NotAMember
 	}
 	if err != nil {
 		return err
 	}
-	t.redisClient.SRem(context.Background(), "user:"+strconv.FormatInt(userID, 10)+":teams", teamID)
+	t.redisClient.SRem(context.Background(), "user:"+strconv.FormatInt(userID, 10)+":teams", teamId)
 	return nil
 }

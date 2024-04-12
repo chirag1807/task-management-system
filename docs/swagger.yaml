@@ -9,17 +9,13 @@ definitions:
         example: 0
         type: integer
     type: object
-  response.AccessToken:
-    description: Used to send access token to response.
-    properties:
-      accessToken:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-        type: string
-    type: object
   response.SuccessResponse:
     description: Send success response to client with corresponding message and id(if
       any).
     properties:
+      code:
+        example: 200 OK
+        type: string
       id:
         example: 974751326021189896
         type: integer
@@ -68,16 +64,8 @@ definitions:
         example: 974751326021189896
         type: integer
     type: object
-  response.Tasks:
-    description: Send array of tasks to response.
-    properties:
-      tasks:
-        items:
-          $ref: '#/definitions/response.Task'
-        type: array
-    type: object
   response.Team:
-    description: Team information with it's id, name, profile (Public or Private),
+    description: Team information with it's id, name, privacy (PUBLIC or PRIVATE),
       id of user who created it, time when it was created and team members.
     properties:
       createdAt:
@@ -94,43 +82,40 @@ definitions:
         type: string
       teamMembers:
         $ref: '#/definitions/response.TeamMembers'
-      teamProfile:
-        example: Public
+      teamPrivacy:
+        example: PUBLIC
         type: string
-    type: object
-  response.TeamMemberDetails:
-    description: Send array of user to response as team members.
-    properties:
-      teamMembers:
-        items:
-          $ref: '#/definitions/response.User'
-        type: array
     type: object
   response.TeamMembers:
     description: Send team's id and it's all members id to the response.
     properties:
-      memberID:
+      memberIds:
         example:
         - 954751326021189800
         - 954751326021189801
         items:
           type: integer
         type: array
-      teamID:
+      teamId:
         example: 954751326021189633
         type: integer
     type: object
-  response.Teams:
-    description: Send array of team to response.
+  response.Tokens:
+    description: Used to send access and refresh token to response.
     properties:
-      team:
-        items:
-          $ref: '#/definitions/response.Team'
-        type: array
+      accessToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
+      code:
+        example: 200 OK
+        type: string
+      refreshToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        type: string
     type: object
   response.User:
     description: User information with id, first name, last name, bio, email, password
-      and profile.
+      and privacy.
     properties:
       bio:
         example: Junior Software Engineer at ZURU TECH INDIA.
@@ -148,10 +133,10 @@ definitions:
         example: Makwana
         type: string
       password:
-        example: Chirag123$
+        example: Chirag123$,omitempty
         type: string
-      profile:
-        example: Public
+      privacy:
+        example: PUBLIC
         type: string
     type: object
   response.UserWithTokens:
@@ -160,19 +145,14 @@ definitions:
       accessToken:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
         type: string
+      code:
+        example: 200 OK
+        type: string
       refreshToken:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
         type: string
       user:
         $ref: '#/definitions/response.User'
-    type: object
-  response.Users:
-    description: Send array of user to response.
-    properties:
-      users:
-        items:
-          $ref: '#/definitions/response.User'
-        type: array
     type: object
 host: localhost:9090
 info:
@@ -255,9 +235,9 @@ paths:
         name: password
         required: true
         type: string
-      - description: Profile of the user (Public, Private)
+      - description: privacy of the user (PUBLIC, PRIVATE)
         in: formData
-        name: profile
+        name: privacy
         required: true
         type: string
       produces:
@@ -296,9 +276,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: Token reset done successfully.
+          description: Token refresh done successfully.
           schema:
-            $ref: '#/definitions/response.AccessToken'
+            $ref: '#/definitions/response.Tokens'
         "401":
           description: Either refresh token not found or token is expired.
           schema:
@@ -341,12 +321,12 @@ paths:
         in: formData
         name: assigneeTeam
         type: integer
-      - description: Status of the task (TO-DO, In-Progress, Completed, Closed)
+      - description: Status of the task (TO-DO, In-PROGRESS, COMPLETED, CLOSED)
         in: formData
         name: status
         required: true
         type: string
-      - description: Priority of the task (Low, Medium, High, Very High)
+      - description: Priority of the task (LOW, MEDIUM, HIGH, VERY HIGH)
         in: formData
         name: priority
         required: true
@@ -359,7 +339,7 @@ paths:
           schema:
             $ref: '#/definitions/response.SuccessResponse'
         "400":
-          description: Bad request, either data is not valid or assignee profile is
+          description: Bad request, either data is not valid or assignee privacy is
             Private.
           schema:
             $ref: '#/definitions/errorhandling.CustomError'
@@ -380,17 +360,17 @@ paths:
       - application/json
       description: Update a task based on provided parameters
       parameters:
+      - description: Task ID
+        in: path
+        name: TaskID
+        required: true
+        type: integer
       - default: Bearer <access_token>
         description: Access Token
         in: header
         name: Authorization
         required: true
         type: string
-      - description: ID of task
-        in: formData
-        name: id
-        required: true
-        type: integer
       - description: 'Title of the task (min length: 4, max length: 48)'
         in: formData
         name: title
@@ -407,11 +387,11 @@ paths:
         in: formData
         name: assigneeTeam
         type: integer
-      - description: Status of the task (TO-DO, In-Progress, Completed, Closed)
+      - description: Status of the task (TO-DO, In-PROGRESS, COMPLETED, CLOSED)
         in: formData
         name: status
         type: string
-      - description: Priority of the task (Low, Medium, High, Very High)
+      - description: Priority of the task (LOW, MEDIUM, HIGH, VERY HIGH)
         in: formData
         name: priority
         type: string
@@ -477,7 +457,7 @@ paths:
         in: query
         name: search
         type: string
-      - description: Filter tasks by status (TO-DO, In-Progress, Completed, Closed)
+      - description: Filter tasks by status (TO-DO, In-PROGRESS, COMPLETED, CLOSED)
         in: query
         name: status
         type: string
@@ -491,7 +471,9 @@ paths:
         "200":
           description: Tasks fetched successfully.
           schema:
-            $ref: '#/definitions/response.Tasks'
+            items:
+              $ref: '#/definitions/response.Task'
+            type: array
         "400":
           description: Bad request
           schema:
@@ -538,7 +520,7 @@ paths:
         in: query
         name: search
         type: string
-      - description: Filter tasks by status (TO-DO, In-Progress, Completed, Closed)
+      - description: Filter tasks by status (TO-DO, In-PROGRESS, COMPLETED, CLOSED)
         in: query
         name: status
         type: string
@@ -552,7 +534,9 @@ paths:
         "200":
           description: Tasks fetched successfully.
           schema:
-            $ref: '#/definitions/response.Tasks'
+            items:
+              $ref: '#/definitions/response.Task'
+            type: array
         "400":
           description: Bad request
           schema:
@@ -601,20 +585,19 @@ paths:
         required: true
         type: string
       - enum:
-        - Public
-        - Private
-        example: Public
+        - PUBLIC
+        - PRIVATE
+        example: PUBLIC
         in: formData
-        name: teamProfile
+        name: privacy
         type: string
       - collectionFormat: multi
-        example:
-        - 954751326021189800
-        - 954751326021189801
+        description: Ids of user who will be added to the team.
         in: formData
         items:
           type: integer
-        name: memberID
+        name: members
+        required: true
         type: array
       produces:
       - application/json
@@ -676,7 +659,9 @@ paths:
         "200":
           description: Teams fetched successfully.
           schema:
-            $ref: '#/definitions/response.Teams'
+            items:
+              $ref: '#/definitions/response.Team'
+            type: array
         "400":
           description: Bad request
           schema:
@@ -759,7 +744,9 @@ paths:
         "200":
           description: Team members fetched successfully.
           schema:
-            $ref: '#/definitions/response.TeamMemberDetails'
+            items:
+              $ref: '#/definitions/response.User'
+            type: array
         "400":
           description: Bad request
           schema:
@@ -781,20 +768,23 @@ paths:
       - application/json
       description: Remove members from a team based on provided parameters
       parameters:
+      - description: Team ID
+        in: path
+        name: TeamID
+        required: true
+        type: integer
       - default: Bearer <access_token>
         description: Access Token
         in: header
         name: Authorization
         required: true
         type: string
-      - description: Team ID
+      - collectionFormat: multi
+        description: Array of member IDs to add to the team
         in: formData
-        name: teamID
-        required: true
-        type: integer
-      - description: Array of member IDs to add to the team
-        in: formData
-        name: memberID
+        items:
+          type: integer
+        name: memberIds
         required: true
         type: array
       produces:
@@ -828,20 +818,23 @@ paths:
       - application/json
       description: Add members to a team based on provided parameters
       parameters:
+      - description: Team ID
+        in: path
+        name: TeamID
+        required: true
+        type: integer
       - default: Bearer <access_token>
         description: Access Token
         in: header
         name: Authorization
         required: true
         type: string
-      - description: Team ID
+      - collectionFormat: multi
+        description: Array of member IDs to add to the team
         in: formData
-        name: teamID
-        required: true
-        type: integer
-      - description: Array of member IDs to add to the team
-        in: formData
-        name: memberID
+        items:
+          type: integer
+        name: memberIds
         required: true
         type: array
       produces:
@@ -938,9 +931,9 @@ paths:
         in: formData
         name: password
         type: string
-      - description: Profile of the user (Public, Private)
+      - description: Privacy of the user (PUBLIC, PRIVATE)
         in: formData
-        name: profile
+        name: privacy
         type: string
       produces:
       - application/json
@@ -973,9 +966,9 @@ paths:
       summary: Update User Profile
       tags:
       - users
-  /api/v1/users/public-profiles:
+  /api/v1/users/public-privacy:
     get:
-      description: Get all public profile users based on query parameters
+      description: Get all public privacy users based on query parameters
       parameters:
       - default: Bearer <access_token>
         description: Access Token
@@ -999,9 +992,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: Public profile users fetched successfully
+          description: Public privacy users fetched successfully
           schema:
-            $ref: '#/definitions/response.Users'
+            items:
+              $ref: '#/definitions/response.User'
+            type: array
         "400":
           description: Bad request
           schema:
@@ -1014,7 +1009,7 @@ paths:
           description: Internal server error.
           schema:
             $ref: '#/definitions/errorhandling.CustomError'
-      summary: Get all public profile users
+      summary: Get all public privacy users
       tags:
       - users
   /api/v1/users/reset-password:

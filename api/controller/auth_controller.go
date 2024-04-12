@@ -23,7 +23,7 @@ func init() {
 type AuthController interface {
 	UserRegistration(w http.ResponseWriter, r *http.Request)
 	UserLogin(w http.ResponseWriter, r *http.Request)
-	ResetToken(w http.ResponseWriter, r *http.Request)
+	RefreshToken(w http.ResponseWriter, r *http.Request)
 }
 
 type authController struct {
@@ -47,7 +47,7 @@ func NewAuthController(authService service.AuthService) AuthController {
 // @Param bio formData string true "Bio of the user"
 // @Param email formData string true "Email of the user"
 // @Param password formData string true "Password of the user"
-// @Param profile formData string true "Profile of the user (Public, Private)"
+// @Param privacy formData string true "privacy of the user (PUBLIC, PRIVATE)"
 // @Success 200 {object} response.SuccessResponse "User created successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request."
 // @Failure 409 {object} errorhandling.CustomError "Duplicate email found."
@@ -58,14 +58,14 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, constant.EMPTY_STRING)
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &userRequest)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.CreateCustomError(err.Error(), http.StatusText(http.StatusBadRequest)), constant.EMPTY_STRING)
 		return
 	}
 
@@ -75,6 +75,10 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
+	}
+
+	if userRequest.Password != userRequest.ConfirmPassword {
+		errorhandling.SendErrorResponse(r, w, errorhandling.PasswordConfirmPasswordNotMatched, constant.EMPTY_STRING)
 	}
 
 	hashedPassword, err := utils.HashPassword(userRequest.Password)
@@ -91,6 +95,7 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 	}
 
 	response := response.SuccessResponse{
+		Code:    http.StatusText(http.StatusOK),
 		Message: constant.USER_REGISTRATION_SUCCEED,
 		ID:      &userId,
 	}
@@ -117,14 +122,14 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, constant.EMPTY_STRING)
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &userLoginRequest)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
 		return
 	}
 
@@ -151,6 +156,7 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := response.UserWithTokens{
+		Code:         http.StatusText(http.StatusOK),
 		User:         user,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -165,14 +171,14 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Tags auth
 // @Param Authorization header string true "Refresh Token" default(Bearer <refresh_token>)
-// @Success 200 {object} response.AccessToken "Token reset done successfully."
+// @Success 200 {object} response.Tokens "Token refresh done successfully."
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/auth/reset-token [post]
-func (a authController) ResetToken(w http.ResponseWriter, r *http.Request) {
+func (a authController) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	token := r.Context().Value(constant.TokenKey).(string)
 
-	userId, err := a.authService.ResetToken(token)
+	userId, refreshToken, err := a.authService.RefreshToken(token)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
@@ -184,8 +190,10 @@ func (a authController) ResetToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := response.AccessToken{
-		AccessToken: accessToken,
+	response := response.Tokens{
+		Code:         http.StatusText(http.StatusOK),
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}
 	config.LoggerInstance.Info(constant.TOKEN_RESET_SUCCEED)
 	utils.SendSuccessResponse(w, http.StatusOK, response)

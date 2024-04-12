@@ -2,6 +2,7 @@ package errorhandling
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/chirag1807/task-management-system/config"
@@ -11,9 +12,9 @@ import (
 // and for those errors, which are not defined in global error handling,
 // it will simply send 'Internal Server Error' as error message and 500 as status code.
 func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, message string, params ...interface{}) {
-	if error, ok := err.(CustomError); ok {
+	if _, ok := err.(CustomError); ok {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(error.StatusCode)
+		// w.WriteHeader(error.Code)
 		config.LoggerInstance.Warning(err.Error())
 
 	} else if error, ok := err.(RequestDataValidationError); ok {
@@ -21,9 +22,10 @@ func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, messag
 		w.WriteHeader(error.StatusCode)
 		config.LoggerInstance.Warning(err.Error())
 	} else {
-		config.LoggerInstance.Error(r, err, message, params...)
+		fmt.Println(err)
+		// config.LoggerInstance.Error(r, err, message, params...)
 		err = CustomError{
-			StatusCode:   http.StatusInternalServerError,
+			Code:   http.StatusText(http.StatusInternalServerError),
 			ErrorMessage: "Internal Server Error",
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

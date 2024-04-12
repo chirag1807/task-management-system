@@ -7,6 +7,7 @@ import (
 
 	"github.com/chirag1807/task-management-system/api/model/dto"
 	"github.com/chirag1807/task-management-system/config"
+	"github.com/chirag1807/task-management-system/constant"
 )
 
 // SendEmail uses go's built in package net/smtp to send email to given email address.
@@ -20,7 +21,7 @@ func SendEmail(email dto.Email) error {
 		email.Body)
 
 	auth := smtp.PlainAuth(
-		"",
+		constant.EMPTY_STRING,
 		config.Config.SMTP.EmailFrom,
 		config.Config.SMTP.EmailPassword,
 		config.Config.SMTP.Host,

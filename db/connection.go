@@ -15,6 +15,7 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, *amqp.Connection) {
 	var connConfig *pgx.ConnConfig
 	var err error
 	if flag == 0 {
+		log.Println(dbConnString())
 		connConfig, err = pgx.ParseConfig(dbConnString())
 	} else {
 		connConfig, err = pgx.ParseConfig(testDbConnString())
@@ -27,6 +28,8 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, *amqp.Connection) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	log.Println(config.Config.Redis.Host, config.Config.Redis.Port)
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     config.Config.Redis.Host + ":" + config.Config.Redis.Port,

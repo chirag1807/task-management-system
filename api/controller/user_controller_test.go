@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetAllPublicProfileUsers(t *testing.T) {
+func TestGetAllPublicPrivacyUsers(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
 		QueryParams  request.UserQueryParams
@@ -23,7 +23,7 @@ func TestGetAllPublicProfileUsers(t *testing.T) {
 		StatusCode   int
 	}{
 		{
-			TestCaseName: "All Public Profile Users Fetched Successfully",
+			TestCaseName: "All Public Privacy Users Fetched Successfully",
 			QueryParams: request.UserQueryParams{
 				Limit:  1,
 				Offset: 0,
@@ -35,7 +35,7 @@ func TestGetAllPublicProfileUsers(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/user/get-public-profile-users", NewUserController(userService).GetAllPublicProfileUsers)
+			r.Get("/api/user/get-public-profile-users", NewUserController(userService).GetAllPublicPrivacyUsers)
 
 			req, err := http.NewRequest("GET", "/api/user/get-public-profile-users", http.NoBody)
 			if err != nil {
@@ -64,7 +64,7 @@ func TestGetMyDetails(t *testing.T) {
 		StatusCode   int
 	}{
 		{
-			TestCaseName: "All Public Profile Users Fetched Successfully",
+			TestCaseName: "Details Fetched Successfully",
 			UserID:       954488202459119617,
 			StatusCode:   200,
 		},
@@ -98,7 +98,7 @@ func TestUpdateUserProfile(t *testing.T) {
 		Bio          string
 		Email        string
 		Password     string
-		Profile      string
+		Privacy      string
 		UserID       int64
 		Expected     interface{}
 		StatusCode   int
@@ -135,9 +135,9 @@ func TestUpdateUserProfile(t *testing.T) {
 		},
 		{
 			TestCaseName: "Value Must be in Enum Values.",
-			Profile:      "public",
+			Privacy:      "public",
 			UserID:       954488202459119617,
-			Expected:     "profile value must be in the enum [Public Private]",
+			Expected:     "profile value must be in the enum [PUBLIC PRIVATE]",
 			StatusCode:   400,
 		},
 	}
@@ -152,7 +152,7 @@ func TestUpdateUserProfile(t *testing.T) {
 				Bio:       v.Bio,
 				Email:     v.Email,
 				Password:  v.Password,
-				Profile:   v.Profile,
+				Privacy:   v.Privacy,
 			}
 			jsonValue, err := json.Marshal(user)
 			if err != nil {

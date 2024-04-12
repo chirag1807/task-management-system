@@ -8,7 +8,7 @@ import (
 
 type TaskService interface {
 	CreateTask(taskToCreate request.Task) (int64, error)
-	GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error)
+	GetAllTasks(userId int64, queryParams request.TaskQueryParams) ([]response.Task, error)
 	GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error)
 	UpdateTask(taskToUpdate request.UpdateTask) error
 }
@@ -27,8 +27,8 @@ func (t taskService) CreateTask(taskToCreate request.Task) (int64, error) {
 	return t.taskRepository.CreateTask(taskToCreate)
 }
 
-func (t taskService) GetAllTasks(userId int64, flag int, queryParams request.TaskQueryParams) ([]response.Task, error) {
-	return t.taskRepository.GetAllTasks(userId, flag, queryParams)
+func (t taskService) GetAllTasks(userId int64, queryParams request.TaskQueryParams) ([]response.Task, error) {
+	return t.taskRepository.GetAllTasks(userId, queryParams)
 }
 
 func (t taskService) GetTasksofTeam(teamId int64, queryParams request.TaskQueryParams) ([]response.Task, error) {

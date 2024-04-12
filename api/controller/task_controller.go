@@ -49,10 +49,10 @@ func NewTaskController(taskService service.TaskService) TaskController {
 // @Param deadline formData time true "Deadline to Complete the task"
 // @Param assigneeIndividual formData int64 false "ID of the individual assignee"
 // @Param assigneeTeam formData int64 false "ID of the team assignee"
-// @Param status formData string true "Status of the task (TO-DO, In-Progress, Completed, Closed)"
-// @Param priority formData string true "Priority of the task (Low, Medium, High, Very High)"
+// @Param status formData string true "Status of the task (TO-DO, In-PROGRESS, COMPLETED, CLOSED)"
+// @Param priority formData string true "Priority of the task (LOW, MEDIUM, HIGH, VERY HIGH)"
 // @Success 200 {object} response.SuccessResponse "Task created successfully."
-// @Failure 400 {object} errorhandling.CustomError "Bad request, either data is not valid or assignee profile is Private."
+// @Failure 400 {object} errorhandling.CustomError "Bad request, either data is not valid or assignee privacy is Private."
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/tasks [post]
@@ -61,14 +61,14 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, constant.EMPTY_STRING)
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &taskToCreate)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
 		return
 	}
 
@@ -90,6 +90,7 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := response.SuccessResponse{
+		Code:    http.StatusText(http.StatusOK),
 		Message: constant.TASK_CREATED,
 		ID:      &taskId,
 	}
@@ -103,13 +104,13 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 // @Produce  json
 // @Tags tasks
 // @Param Authorization header string true "Access Token" default(Bearer <access_token>)
-// @Param Flag path int true "Flag indicating 0 means tasks created by user and 1 means tasks assigned to user."
+// @Param createdByMe query bool true "return tasks created by you if createdByMe set to true otherwise false."
 // @Param limit query int false "Number of tasks to return per page (default 10)"
 // @Param offset query int false "Offset for pagination (default 0)"
 // @Param search query string false "Search term to filter tasks"
-// @Param status query string false "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)"
+// @Param status query string false "Filter tasks by status (TO-DO, In-PROGRESS, COMPLETED, CLOSED)"
 // @Param sortByFilter query bool false "Sort tasks by create time (true for ascending, false for descending)"
-// @Success 200 {object} response.Tasks "Tasks fetched successfully."
+// @Success 200 {object} []response.Task "Tasks fetched successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 422 {object} errorhandling.CustomError "Provide valid flag"
@@ -121,7 +122,7 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	decoder := schema.NewDecoder()
 	err := decoder.Decode(&taskQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.CreateCustomError(err.Error(), http.StatusText(http.StatusBadRequest)), constant.EMPTY_STRING)
 		return
 	}
 
@@ -136,29 +137,12 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
-	flag, err := strconv.Atoi(chi.URLParam(r, "Flag"))
+	tasks, err := t.taskService.GetAllTasks(userId, taskQueryParams)
 	if err != nil {
-		if strings.Contains(err.Error(), "strconv.Atoi: parsing") {
-			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidFlag, "")
-			return
-		}
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
-
-	if flag == 0 || flag == 1 {
-		tasks, err := t.taskService.GetAllTasks(userId, flag, taskQueryParams)
-		if err != nil {
-			errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-			return
-		}
-		response := response.Tasks{
-			Tasks: tasks,
-		}
-		utils.SendSuccessResponse(w, http.StatusOK, response)
-	} else {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidFlag, "")
-	}
+	utils.SendSuccessResponse(w, http.StatusOK, tasks)
 }
 
 // @Summary Get all tasks of a team
@@ -166,13 +150,13 @@ func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Tags tasks
 // @Param Authorization header string true "Access Token" default(Bearer <access_token>)
-// @Param TeamID path int true "Team ID"
+// @Param TeamID path int64 true "Team ID"
 // @Param limit query int false "Number of tasks to return per page (default 10)"
 // @Param offset query int false "Offset for pagination (default 0)"
 // @Param search query string false "Search term to filter tasks"
-// @Param status query string false "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)"
+// @Param status query string false "Filter tasks by status (TO-DO, In-PROGRESS, COMPLETED, CLOSED)"
 // @Param sortByFilter query bool false "Sort tasks by create time (true for ascending, false for descending)"
-// @Success 200 {object} response.Tasks "Tasks fetched successfully."
+// @Success 200 {object} []response.Task "Tasks fetched successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
@@ -184,7 +168,7 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 	decoder := schema.NewDecoder()
 	err := decoder.Decode(&taskQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, constant.EMPTY_STRING)
 		return
 	}
 
@@ -198,25 +182,22 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 		taskQueryParams.Limit = 10
 	}
 
-	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
+	teamId, err := strconv.ParseInt(chi.URLParam(r, constant.TEAM_ID), 10, 64)
 	if err != nil {
-		if strings.Contains(err.Error(), "strconv.Atoi: parsing") {
-			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, "")
+		if strings.Contains(err.Error(), constant.URL_PARAM_CONVERT_ERROR) {
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, constant.EMPTY_STRING)
 			return
 		}
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 
-	tasks, err := t.taskService.GetTasksofTeam(teamID, taskQueryParams)
+	tasks, err := t.taskService.GetTasksofTeam(teamId, taskQueryParams)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
-	response := response.Tasks{
-		Tasks: tasks,
-	}
-	utils.SendSuccessResponse(w, http.StatusOK, response)
+	utils.SendSuccessResponse(w, http.StatusOK, tasks)
 }
 
 // UpdateTask updates a task.
@@ -225,14 +206,14 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Tags tasks
+// @Param TaskID path int64 true "Task ID"
 // @Param Authorization header string true "Access Token" default(Bearer <access_token>)
-// @Param id formData int64 true "ID of task"
 // @Param title formData string false "Title of the task (min length: 4, max length: 48)"
 // @Param description formData string false "Description of the task (min length: 12, max length: 196)"
 // @Param assigneeIndividual formData int64 false "ID of the individual assignee"
 // @Param assigneeTeam formData int64 false "ID of the team assignee"
-// @Param status formData string false "Status of the task (TO-DO, In-Progress, Completed, Closed)"
-// @Param priority formData string false "Priority of the task (Low, Medium, High, Very High)"
+// @Param status formData string false "Status of the task (TO-DO, In-PROGRESS, COMPLETED, CLOSED)"
+// @Param priority formData string false "Priority of the task (LOW, MEDIUM, HIGH, VERY HIGH)"
 // @Success 200 {object} response.SuccessResponse "Task updated successfully"
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
@@ -246,18 +227,29 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, constant.EMPTY_STRING)
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &taskToUpdate)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
 		return
 	}
 
 	r.Body = io.NopCloser(bytes.NewReader(body))
+
+	taskId, err := strconv.ParseInt(chi.URLParam(r, constant.TASK_ID), 10, 64)
+	if err != nil {
+		if strings.Contains(err.Error(), constant.URL_PARAM_CONVERT_ERROR) {
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, constant.EMPTY_STRING)
+			return
+		}
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
+		return
+	}
+	taskToUpdate.ID = taskId
 
 	err = utils.Validate.Struct(taskToUpdate)
 	if err != nil {
@@ -277,6 +269,7 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := response.SuccessResponse{
+		Code:    http.StatusText(http.StatusOK),
 		Message: constant.TASK_UPDATED,
 	}
 	config.LoggerInstance.Info(constant.TASK_UPDATED)

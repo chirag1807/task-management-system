@@ -20,7 +20,7 @@ func CreateJWTToken(tokenExpiryTime time.Time, userId int64) (string, error) {
 
 	token, err := jwtToken.SignedString([]byte(config.JWtSecretKey.SecretKey))
 	if err != nil {
-		return "", err
+		return constant.EMPTY_STRING, err
 	}
 	return token, nil
 }

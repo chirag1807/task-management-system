@@ -20,7 +20,7 @@ func ConsumeUserMail(rabbitmqConn *amqp.Connection) {
 
 	msgs, err := ch.Consume(
 		constant.USER_MAIL_QUEUE,
-		"",
+		constant.EMPTY_STRING,
 		true,
 		false,
 		false,

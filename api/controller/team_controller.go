@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -45,8 +46,8 @@ func NewTeamController(teamService service.TeamService) TeamController {
 // @Produce json
 // @Tags teams
 // @Param Authorization header string true "Access Token" default(Bearer <access_token>)
-// @Param teamDetails formData request.Team true "Team name and profile"
-// @Param teamMembers formData request.TeamMembers true "Ids of user who will be added to the team."
+// @Param details formData request.Team true "Team name and profile"
+// @Param members formData []int64 true "Ids of user who will be added to the team."
 // @Success 200 {object} response.SuccessResponse "Team created successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
@@ -57,14 +58,14 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, constant.EMPTY_STRING)
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &team)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
 		return
 	}
 
@@ -77,19 +78,20 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
-	team.TeamDetails.CreatedBy = userId
-	if team.TeamDetails.TeamProfile == nil {
-		defaultTeamProfile := "Public"
-		team.TeamDetails.TeamProfile = &defaultTeamProfile
+	team.Details.CreatedBy = userId
+	if team.Details.Privacy == nil {
+		defaultTeamPrivacy := "PUBLIC"
+		team.Details.Privacy = &defaultTeamPrivacy
 	}
-	team.TeamMembers.MemberID = append(team.TeamMembers.MemberID, userId)
+	team.Members = append(team.Members, userId)
 
-	teamId, err := t.teamService.CreateTeam(team.TeamDetails, team.TeamMembers)
+	teamId, err := t.teamService.CreateTeam(team.Details, team.Members)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{
+		Code:    http.StatusText(http.StatusOK),
 		Message: constant.TEAM_CREATED,
 		ID:      &teamId,
 	}
@@ -103,9 +105,9 @@ func (t teamController) CreateTeam(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Tags teams
+// @Param TeamID path int64 true "Team ID"
 // @Param Authorization header string true "Access Token" default(Bearer <access_token>)
-// @Param teamID formData int true "Team ID"
-// @Param memberID formData array true "Array of member IDs to add to the team"
+// @Param memberIds formData []int64 true "Array of member IDs to add to the team"
 // @Success 200 {object} response.SuccessResponse "Members added successfully"
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
@@ -118,16 +120,27 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, constant.EMPTY_STRING)
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &teamMembersToAdd)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
 		return
 	}
+
+	teamId, err := strconv.ParseInt(chi.URLParam(r, constant.TEAM_ID), 10, 64)
+	if err != nil {
+		if strings.Contains(err.Error(), constant.URL_PARAM_CONVERT_ERROR) {
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, constant.EMPTY_STRING)
+			return
+		}
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
+		return
+	}
+	teamMembersToAdd.TeamID = teamId
 
 	r.Body = io.NopCloser(bytes.NewReader(body))
 
@@ -144,6 +157,7 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	response := response.SuccessResponse{
+		Code:    http.StatusText(http.StatusOK),
 		Message: constant.MEMBERS_ADDED_TO_TEAM,
 	}
 	config.LoggerInstance.Info(constant.MEMBERS_ADDED_TO_TEAM)
@@ -156,9 +170,9 @@ func (t teamController) AddMembersToTeam(w http.ResponseWriter, r *http.Request)
 // @Accept json
 // @Produce json
 // @Tags teams
+// @Param TeamID path int64 true "Team ID"
 // @Param Authorization header string true "Access Token" default(Bearer <access_token>)
-// @Param teamID formData int true "Team ID"
-// @Param memberID formData array true "Array of member IDs to add to the team"
+// @Param memberIds formData []int64 true "Array of member IDs to add to the team"
 // @Success 200 {object} response.SuccessResponse "Members Removed successfully"
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
@@ -170,16 +184,27 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadBodyError, constant.EMPTY_STRING)
 		return
 	}
 	defer r.Body.Close()
 
 	err = json.Unmarshal(body, &teamMembersToRemove)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
 		return
 	}
+
+	teamId, err := strconv.ParseInt(chi.URLParam(r, constant.TEAM_ID), 10, 64)
+	if err != nil {
+		if strings.Contains(err.Error(), constant.URL_PARAM_CONVERT_ERROR) {
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, constant.EMPTY_STRING)
+			return
+		}
+		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
+		return
+	}
+	teamMembersToRemove.TeamID = teamId
 
 	r.Body = io.NopCloser(bytes.NewReader(body))
 
@@ -196,6 +221,7 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 		return
 	}
 	response := response.SuccessResponse{
+		Code:    http.StatusText(http.StatusOK),
 		Message: constant.MEMBERS_REMOVED_FROM_TEAM,
 	}
 	config.LoggerInstance.Info(constant.MEMBERS_REMOVED_FROM_TEAM)
@@ -208,12 +234,12 @@ func (t teamController) RemoveMembersFromTeam(w http.ResponseWriter, r *http.Req
 // @Produce json
 // @Tags teams
 // @Param Authorization header string true "Access Token" default(Bearer <access_token>)
-// @Param Flag path int true "Flag indicating 0 means teams created by user and 1 means teams in which user were added."
+// @Param createdByMe query bool true "return teams created by you if createdByMe set to true otherwise false."
 // @Param limit query int false "Number of tasks to return per page (default 10)"
 // @Param offset query int false "Offset for pagination (default 0)"
 // @Param search query string false "Search term to filter tasks"
 // @Param sortByCreatedAt query bool false "Sort tasks by create time (true for ascending, false for descending)"
-// @Success 200 {object} response.Teams "Teams fetched successfully."
+// @Success 200 {object} []response.Team "Teams fetched successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 422 {object} errorhandling.CustomError "Provide valid flag"
@@ -224,8 +250,9 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 
 	decoder := schema.NewDecoder()
 	err := decoder.Decode(&teamQueryParams, r.URL.Query())
+	fmt.Println(err)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, constant.EMPTY_STRING)
 		return
 	}
 
@@ -240,28 +267,12 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userId := r.Context().Value(constant.UserIdKey).(int64)
-	flag, err := strconv.Atoi(chi.URLParam(r, "Flag"))
+	teams, err := t.teamService.GetAllTeams(userId, teamQueryParams)
 	if err != nil {
-		if strings.Contains(err.Error(), "strconv.Atoi: parsing") {
-			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidFlag, "")
-			return
-		}
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
-	if flag == 0 || flag == 1 {
-		teams, err := t.teamService.GetAllTeams(userId, flag, teamQueryParams)
-		if err != nil {
-			errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
-			return
-		}
-		response := response.Teams{
-			Teams: teams,
-		}
-		utils.SendSuccessResponse(w, http.StatusOK, response)
-	} else {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidFlag, "")
-	}
+	utils.SendSuccessResponse(w, http.StatusOK, teams)
 }
 
 // GetTeamMembers fetches all members of the team.
@@ -273,7 +284,7 @@ func (t teamController) GetAllTeams(w http.ResponseWriter, r *http.Request) {
 // @Param TeamID path int64 true "ID of team whose members you want."
 // @Param limit query int false "Number of tasks to return per page (default 10)"
 // @Param offset query int false "Offset for pagination (default 0)"
-// @Success 200 {object} response.TeamMemberDetails "Team members fetched successfully."
+// @Success 200 {object} []response.User "Team members fetched successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
@@ -284,7 +295,7 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 	decoder := schema.NewDecoder()
 	err := decoder.Decode(&teamQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, "")
+		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, constant.EMPTY_STRING)
 		return
 	}
 
@@ -298,24 +309,21 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 		teamQueryParams.Limit = 10
 	}
 
-	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
+	teamId, err := strconv.ParseInt(chi.URLParam(r, constant.TEAM_ID), 10, 64)
 	if err != nil {
-		if strings.Contains(err.Error(), "strconv.ParseInt: parsing") {
-			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, "")
+		if strings.Contains(err.Error(), constant.URL_PARAM_CONVERT_ERROR) {
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, constant.EMPTY_STRING)
 			return
 		}
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
-	teamMembers, err := t.teamService.GetTeamMembers(teamID, teamQueryParams)
+	teamMembers, err := t.teamService.GetTeamMembers(teamId, teamQueryParams)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
-	response := response.TeamMemberDetails{
-		TeamMembers: teamMembers,
-	}
-	utils.SendSuccessResponse(w, http.StatusOK, response)
+	utils.SendSuccessResponse(w, http.StatusOK, teamMembers)
 }
 
 // LeaveTeam removes user from particular team.
@@ -328,24 +336,25 @@ func (t teamController) GetTeamMembers(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} response.SuccessResponse "Team left successfully."
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired or you are not a member of that team."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
-// @Router /api/v1/teams/{TeamID} [delete]
+// @Router /api/v1/teams/leave/{TeamID} [delete]
 func (t teamController) LeaveTeam(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(constant.UserIdKey).(int64)
-	teamID, err := strconv.ParseInt(chi.URLParam(r, "TeamID"), 10, 64)
+	teamId, err := strconv.ParseInt(chi.URLParam(r, constant.TEAM_ID), 10, 64)
 	if err != nil {
-		if strings.Contains(err.Error(), "strconv.ParseInt: parsing") {
-			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, "")
+		if strings.Contains(err.Error(), constant.URL_PARAM_CONVERT_ERROR) {
+			errorhandling.SendErrorResponse(r, w, errorhandling.ProvideValidParams, constant.EMPTY_STRING)
 			return
 		}
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
-	err = t.teamService.LeaveTeam(userId, teamID)
+	err = t.teamService.LeaveTeam(userId, teamId)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return
 	}
 	response := response.SuccessResponse{
+		Code:    http.StatusText(http.StatusOK),
 		Message: constant.LEAVE_TEAM,
 	}
 	config.LoggerInstance.Info(constant.LEAVE_TEAM)

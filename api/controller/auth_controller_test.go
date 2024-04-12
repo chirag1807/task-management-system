@@ -22,7 +22,7 @@ func TestUserRegistration(t *testing.T) {
 		Bio          string
 		Email        string
 		Password     string
-		Profile      string
+		Privacy      string
 		Expected     interface{}
 		StatusCode   int
 	}{
@@ -33,7 +33,7 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana1807@gmail.com",
 			Password:     "Chirag123$",
-			Profile:      "Public",
+			Privacy:      "PUBLIC",
 			Expected:     "User Registration Done Successfully.",
 			StatusCode:   200,
 		},
@@ -44,7 +44,7 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana1807@gmail.com",
 			Password:     "Chirag123$",
-			Profile:      "Public",
+			Privacy:      "PUBLIC",
 			Expected:     "lastName is required to not be empty.",
 			StatusCode:   400,
 		},
@@ -54,7 +54,7 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana1807@gmail.com",
 			Password:     "Chirag123$",
-			Profile:      "Public",
+			Privacy:      "PUBLIC",
 			Expected:     "lastName is required to not be empty.",
 			StatusCode:   400,
 		},
@@ -65,7 +65,7 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana1807@gmail.com",
 			Password:     "Chirag123$",
-			Profile:      "Public",
+			Privacy:      "PUBLIC",
 			Expected:     "lastName violates minimum length constraint.",
 			StatusCode:   400,
 		},
@@ -76,7 +76,7 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana1807",
 			Password:     "Chirag123$",
-			Profile:      "Public",
+			Privacy:      "PUBLIC",
 			Expected:     "please provide email in valid format.",
 			StatusCode:   400,
 		},
@@ -87,7 +87,7 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana1807@gmail.com",
 			Password:     "Chirag123$",
-			Profile:      "Public",
+			Privacy:      "PUBLIC",
 			Expected:     "Duplicate Email Found.",
 			StatusCode:   409,
 		},
@@ -98,8 +98,8 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana18@gmail.com",
 			Password:     "Chirag123$",
-			Profile:      "public",
-			Expected:     "profile value must be in the enum [Public Private]",
+			Privacy:      "public",
+			Expected:     "privacy value must be in the enum [PUBLIC PRIVATE]",
 			StatusCode:   400,
 		},
 	}
@@ -114,7 +114,7 @@ func TestUserRegistration(t *testing.T) {
 				Bio:       v.Bio,
 				Email:     v.Email,
 				Password:  v.Password,
-				Profile:   v.Profile,
+				Privacy:   v.Privacy,
 			}
 			jsonValue, err := json.Marshal(user)
 			if err != nil {
@@ -217,7 +217,7 @@ func TestResetToken(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/auth/reset-token", NewAuthController(authService).ResetToken)
+			r.Post("/api/auth/reset-token", NewAuthController(authService).RefreshToken)
 
 			req, _ := http.NewRequest("POST", "/api/auth/reset-token", http.NoBody)
 			ctx := context.WithValue(req.Context(), constant.TokenKey, v.Token)

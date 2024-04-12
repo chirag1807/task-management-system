@@ -46,31 +46,31 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn 
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/registration", authController.UserRegistration)
 			r.Post("/login", authController.UserLogin)
-			r.With(middleware.VerifyToken(1)).Post("/reset-token", authController.ResetToken)
+			r.With(middleware.VerifyToken(1)).Post("/refresh-token", authController.RefreshToken)
 		})
 
 		r.Route("/tasks", func(r chi.Router) {
 			r.Use(middleware.VerifyToken(0))
 			r.Post("/", taskController.CreateTask)
-			r.Put("/", taskController.UpdateTask)
-			r.Get("/{Flag}", taskController.GetAllTasks)
+			r.Put("/{TaskID}", taskController.UpdateTask)
+			r.Get("/", taskController.GetAllTasks)
 			r.Get("/team/{TeamID}", taskController.GetTasksofTeam)
 		})
 
 		r.Route("/teams", func(r chi.Router) {
 			r.Use(middleware.VerifyToken(0))
 			r.Post("/", teamController.CreateTeam)
-			r.Put("/members", teamController.AddMembersToTeam)
-			r.Delete("/members", teamController.RemoveMembersFromTeam)
-			r.Get("/{Flag}", teamController.GetAllTeams)
+			r.Put("/{TeamID}/members", teamController.AddMembersToTeam)
+			r.Delete("/{TeamID}/members", teamController.RemoveMembersFromTeam)
+			r.Get("/", teamController.GetAllTeams)
 			r.Get("/{TeamID}/members", teamController.GetTeamMembers)
-			r.Delete("/{TeamID}", teamController.LeaveTeam)
+			r.Delete("/leave/{TeamID}", teamController.LeaveTeam)
 		})
 
 		r.Route("/users", func(r chi.Router) {
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.VerifyToken(0))
-				r.Get("/public-profiles", userController.GetAllPublicProfileUsers)
+				r.Get("/public-privacy", userController.GetAllPublicPrivacyUsers)
 				r.Get("/profile", userController.GetMyDetails)
 				r.Put("/profile", userController.UpdateUserProfile)
 			})

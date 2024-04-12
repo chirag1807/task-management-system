@@ -7,12 +7,12 @@ import (
 )
 
 type TeamService interface {
-	CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error)
+	CreateTeam(teamToCreate request.Team, teamMembers []int64) (int64, error)
 	AddMembersToTeam(teamCreatedBy int64, teamMembersToAdd request.TeamMembersWithTeamID) error
 	RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRemove request.TeamMembersWithTeamID) error
-	GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error)
-	GetTeamMembers(teamID int64, queryParams request.TeamQueryParams) ([]response.User, error)
-	LeaveTeam(userID int64, teamID int64) (error)
+	GetAllTeams(userID int64, queryParams request.TeamQueryParams) ([]response.Team, error)
+	GetTeamMembers(teamId int64, queryParams request.TeamQueryParams) ([]response.User, error)
+	LeaveTeam(userID int64, teamId int64) (error)
 }
 
 type teamService struct {
@@ -25,7 +25,7 @@ func NewTeamService(teamRepository repository.TeamRepository) TeamService {
 	}
 }
 
-func (t teamService) CreateTeam(teamToCreate request.Team, teamMembers request.TeamMembers) (int64, error) {
+func (t teamService) CreateTeam(teamToCreate request.Team, teamMembers []int64) (int64, error) {
 	return t.teamRepository.CreateTeam(teamToCreate, teamMembers)
 }
 
@@ -37,14 +37,14 @@ func (t teamService) RemoveMembersFromTeam(teamCreatedBy int64, teamMembersToRem
 	return t.teamRepository.RemoveMembersFromTeam(teamCreatedBy, teamMembersToRemove)
 }
 
-func (t teamService) GetAllTeams(userID int64, flag int, queryParams request.TeamQueryParams) ([]response.Team, error) {
-	return t.teamRepository.GetAllTeams(userID, flag, queryParams)
+func (t teamService) GetAllTeams(userID int64, queryParams request.TeamQueryParams) ([]response.Team, error) {
+	return t.teamRepository.GetAllTeams(userID, queryParams)
 }
 
-func (t teamService) GetTeamMembers(teamID int64, queryParams request.TeamQueryParams) ([]response.User, error) {
-	return t.teamRepository.GetTeamMembers(teamID, queryParams)
+func (t teamService) GetTeamMembers(teamId int64, queryParams request.TeamQueryParams) ([]response.User, error) {
+	return t.teamRepository.GetTeamMembers(teamId, queryParams)
 }
 
-func (t teamService) LeaveTeam(userID int64, teamID int64) (error) {
-	return t.teamRepository.LeftTeam(userID, teamID)
+func (t teamService) LeaveTeam(userID int64, teamId int64) (error) {
+	return t.teamRepository.LeaveTeam(userID, teamId)
 }

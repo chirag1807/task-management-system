@@ -3,6 +3,7 @@ package errorhandling
 import (
 	"net/http"
 
+	"github.com/chirag1807/task-management-system/constant"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 )
@@ -41,5 +42,5 @@ func HandleInvalidRequestData(w http.ResponseWriter, r *http.Request, err error,
 		errors = append(errors, InvalidRequestData{ParameterName: e.Field(), ErrorMessage: e.Translate(translator)})
 	}
 
-	SendErrorResponse(r, w, CreateRequestDataValidationError(errors, http.StatusBadRequest), "")
+	SendErrorResponse(r, w, CreateRequestDataValidationError(errors, http.StatusBadRequest), constant.EMPTY_STRING)
 }

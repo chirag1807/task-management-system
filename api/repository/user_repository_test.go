@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetAllPublicProfileUsers(t *testing.T) {
+func TestGetAllPublicPrivacyUsers(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
 		QueryParams  request.UserQueryParams
@@ -19,7 +19,7 @@ func TestGetAllPublicProfileUsers(t *testing.T) {
 		StatusCode   int
 	}{
 		{
-			TestCaseName: "Public Profile Users Fetched Successfully",
+			TestCaseName: "Public Privacy Users Fetched Successfully",
 			QueryParams: request.UserQueryParams{
 				Limit:  1,
 				Offset: 0,
@@ -32,7 +32,7 @@ func TestGetAllPublicProfileUsers(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			_, err := NewUserRepo(dbConn, rabbitmqConn).GetAllPublicProfileUsers(v.QueryParams)
+			_, err := NewUserRepo(dbConn, rabbitmqConn).GetAllPublicPrivacyUsers(v.QueryParams)
 			assert.Equal(t, v.Expected, err)
 		})
 	}
@@ -75,7 +75,7 @@ func TestUpdateUserProfile(t *testing.T) {
 		Bio          string
 		Email        string
 		Password     string
-		Profile      string
+		Privacy      string
 		UserID       int64
 		Expected     interface{}
 		StatusCode   int
@@ -89,10 +89,10 @@ func TestUpdateUserProfile(t *testing.T) {
 			StatusCode:   200,
 		},
 		{
-			TestCaseName: "Leave All Teams to Make Profile Private",
-			Profile:      "Private",
+			TestCaseName: "Leave All Teams to Make Privacy Private",
+			Privacy:      "PRIVATE",
 			UserID:       954488202459119617,
-			Expected:     errorhandling.LeftAllTeamsToMakeProfilePrivate,
+			Expected:     errorhandling.LeftAllTeamsToMakePrivacyPrivate,
 			StatusCode:   401,
 		},
 		{
@@ -110,7 +110,7 @@ func TestUpdateUserProfile(t *testing.T) {
 				FirstName: v.FirstName,
 				LastName:  v.LastName,
 				Email:     v.Email,
-				Profile:   v.Profile,
+				Privacy:   v.Privacy,
 			}
 			err := NewUserRepo(dbConn, rabbitmqConn).UpdateUserProfile(v.UserID, userToUpdate)
 			assert.Equal(t, v.Expected, err)

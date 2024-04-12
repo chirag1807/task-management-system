@@ -18,9 +18,3 @@ type Task struct {
 	UpdatedBy          *int64     `json:"updatedBy,omitempty" example:"974751326021189896"`
 	UpdatedAt          *time.Time `json:"updatedAt,omitempty" example:"2024-03-26T12:49:539.000Z"`
 }
-
-// Task model info
-// @Description Send array of tasks to response.
-type Tasks struct {
-	Tasks []Task `json:"tasks"`
-}

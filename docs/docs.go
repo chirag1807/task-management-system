@@ -129,8 +129,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Profile of the user (Public, Private)",
-                        "name": "profile",
+                        "description": "privacy of the user (PUBLIC, PRIVATE)",
+                        "name": "privacy",
                         "in": "formData",
                         "required": true
                     }
@@ -185,9 +185,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Token reset done successfully.",
+                        "description": "Token refresh done successfully.",
                         "schema": {
-                            "$ref": "#/definitions/response.AccessToken"
+                            "$ref": "#/definitions/response.Tokens"
                         }
                     },
                     "401": {
@@ -255,14 +255,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Status of the task (TO-DO, In-Progress, Completed, Closed)",
+                        "description": "Status of the task (TO-DO, In-PROGRESS, COMPLETED, CLOSED)",
                         "name": "status",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Priority of the task (Low, Medium, High, Very High)",
+                        "description": "Priority of the task (LOW, MEDIUM, HIGH, VERY HIGH)",
                         "name": "priority",
                         "in": "formData",
                         "required": true
@@ -276,7 +276,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad request, either data is not valid or assignee profile is Private.",
+                        "description": "Bad request, either data is not valid or assignee privacy is Private.",
                         "schema": {
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
@@ -311,18 +311,18 @@ const docTemplate = `{
                 "summary": "Update a task",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Task ID",
+                        "name": "TaskID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "default": "Bearer \u003caccess_token\u003e",
                         "description": "Access Token",
                         "name": "Authorization",
                         "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID of task",
-                        "name": "id",
-                        "in": "formData",
                         "required": true
                     },
                     {
@@ -351,13 +351,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Status of the task (TO-DO, In-Progress, Completed, Closed)",
+                        "description": "Status of the task (TO-DO, In-PROGRESS, COMPLETED, CLOSED)",
                         "name": "status",
                         "in": "formData"
                     },
                     {
                         "type": "string",
-                        "description": "Priority of the task (Low, Medium, High, Very High)",
+                        "description": "Priority of the task (LOW, MEDIUM, HIGH, VERY HIGH)",
                         "name": "priority",
                         "in": "formData"
                     }
@@ -454,7 +454,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)",
+                        "description": "Filter tasks by status (TO-DO, In-PROGRESS, COMPLETED, CLOSED)",
                         "name": "status",
                         "in": "query"
                     },
@@ -469,7 +469,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Tasks fetched successfully.",
                         "schema": {
-                            "$ref": "#/definitions/response.Tasks"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.Task"
+                            }
                         }
                     },
                     "400": {
@@ -539,7 +542,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Filter tasks by status (TO-DO, In-Progress, Completed, Closed)",
+                        "description": "Filter tasks by status (TO-DO, In-PROGRESS, COMPLETED, CLOSED)",
                         "name": "status",
                         "in": "query"
                     },
@@ -554,7 +557,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Tasks fetched successfully.",
                         "schema": {
-                            "$ref": "#/definitions/response.Tasks"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.Task"
+                            }
                         }
                     },
                     "400": {
@@ -635,12 +641,12 @@ const docTemplate = `{
                     },
                     {
                         "enum": [
-                            "Public",
-                            "Private"
+                            "PUBLIC",
+                            "PRIVATE"
                         ],
                         "type": "string",
-                        "example": "Public",
-                        "name": "teamProfile",
+                        "example": "PUBLIC",
+                        "name": "privacy",
                         "in": "formData"
                     },
                     {
@@ -649,12 +655,10 @@ const docTemplate = `{
                             "type": "integer"
                         },
                         "collectionFormat": "multi",
-                        "example": [
-                            954751326021189800,
-                            954751326021189801
-                        ],
-                        "name": "memberID",
-                        "in": "formData"
+                        "description": "Ids of user who will be added to the team.",
+                        "name": "members",
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -700,6 +704,13 @@ const docTemplate = `{
                 "summary": "Add members to a team",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "TeamID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "default": "Bearer \u003caccess_token\u003e",
                         "description": "Access Token",
@@ -708,16 +719,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "Team ID",
-                        "name": "teamID",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "multi",
                         "description": "Array of member IDs to add to the team",
-                        "name": "memberID",
+                        "name": "memberIds",
                         "in": "formData",
                         "required": true
                     }
@@ -775,6 +783,13 @@ const docTemplate = `{
                 "summary": "Remove members from a team",
                 "parameters": [
                     {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "TeamID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
                         "type": "string",
                         "default": "Bearer \u003caccess_token\u003e",
                         "description": "Access Token",
@@ -783,16 +798,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "Team ID",
-                        "name": "teamID",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
                         "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "multi",
                         "description": "Array of member IDs to add to the team",
-                        "name": "memberID",
+                        "name": "memberIds",
                         "in": "formData",
                         "required": true
                     }
@@ -886,7 +898,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Teams fetched successfully.",
                         "schema": {
-                            "$ref": "#/definitions/response.Teams"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.Team"
+                            }
                         }
                     },
                     "400": {
@@ -1008,7 +1023,10 @@ const docTemplate = `{
                     "200": {
                         "description": "Team members fetched successfully.",
                         "schema": {
-                            "$ref": "#/definitions/response.TeamMemberDetails"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.User"
+                            }
                         }
                     },
                     "400": {
@@ -1132,8 +1150,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Profile of the user (Public, Private)",
-                        "name": "profile",
+                        "description": "Privacy of the user (PUBLIC, PRIVATE)",
+                        "name": "privacy",
                         "in": "formData"
                     }
                 ],
@@ -1177,16 +1195,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/users/public-profiles": {
+        "/api/v1/users/public-privacy": {
             "get": {
-                "description": "Get all public profile users based on query parameters",
+                "description": "Get all public privacy users based on query parameters",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "users"
                 ],
-                "summary": "Get all public profile users",
+                "summary": "Get all public privacy users",
                 "parameters": [
                     {
                         "type": "string",
@@ -1217,9 +1235,12 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Public profile users fetched successfully",
+                        "description": "Public privacy users fetched successfully",
                         "schema": {
-                            "$ref": "#/definitions/response.Users"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.User"
+                            }
                         }
                     },
                     "400": {
@@ -1422,20 +1443,14 @@ const docTemplate = `{
                 }
             }
         },
-        "response.AccessToken": {
-            "description": "Used to send access token to response.",
-            "type": "object",
-            "properties": {
-                "accessToken": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-                }
-            }
-        },
         "response.SuccessResponse": {
             "description": "Send success response to client with corresponding message and id(if any).",
             "type": "object",
             "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "200 OK"
+                },
                 "id": {
                     "type": "integer",
                     "example": 974751326021189896
@@ -1500,20 +1515,8 @@ const docTemplate = `{
                 }
             }
         },
-        "response.Tasks": {
-            "description": "Send array of tasks to response.",
-            "type": "object",
-            "properties": {
-                "tasks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.Task"
-                    }
-                }
-            }
-        },
         "response.Team": {
-            "description": "Team information with it's id, name, profile (Public or Private), id of user who created it, time when it was created and team members.",
+            "description": "Team information with it's id, name, privacy (PUBLIC or PRIVATE), id of user who created it, time when it was created and team members.",
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -1535,21 +1538,9 @@ const docTemplate = `{
                 "teamMembers": {
                     "$ref": "#/definitions/response.TeamMembers"
                 },
-                "teamProfile": {
+                "teamPrivacy": {
                     "type": "string",
-                    "example": "Public"
-                }
-            }
-        },
-        "response.TeamMemberDetails": {
-            "description": "Send array of user to response as team members.",
-            "type": "object",
-            "properties": {
-                "teamMembers": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.User"
-                    }
+                    "example": "PUBLIC"
                 }
             }
         },
@@ -1557,7 +1548,7 @@ const docTemplate = `{
             "description": "Send team's id and it's all members id to the response.",
             "type": "object",
             "properties": {
-                "memberID": {
+                "memberIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -1567,26 +1558,32 @@ const docTemplate = `{
                         954751326021189801
                     ]
                 },
-                "teamID": {
+                "teamId": {
                     "type": "integer",
                     "example": 954751326021189633
                 }
             }
         },
-        "response.Teams": {
-            "description": "Send array of team to response.",
+        "response.Tokens": {
+            "description": "Used to send access and refresh token to response.",
             "type": "object",
             "properties": {
-                "team": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.Team"
-                    }
+                "accessToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                },
+                "code": {
+                    "type": "string",
+                    "example": "200 OK"
+                },
+                "refreshToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                 }
             }
         },
         "response.User": {
-            "description": "User information with id, first name, last name, bio, email, password and profile.",
+            "description": "User information with id, first name, last name, bio, email, password and privacy.",
             "type": "object",
             "properties": {
                 "bio": {
@@ -1611,11 +1608,11 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string",
-                    "example": "Chirag123$"
+                    "example": "Chirag123$,omitempty"
                 },
-                "profile": {
+                "privacy": {
                     "type": "string",
-                    "example": "Public"
+                    "example": "PUBLIC"
                 }
             }
         },
@@ -1627,24 +1624,16 @@ const docTemplate = `{
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                 },
+                "code": {
+                    "type": "string",
+                    "example": "200 OK"
+                },
                 "refreshToken": {
                     "type": "string",
                     "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                 },
                 "user": {
                     "$ref": "#/definitions/response.User"
-                }
-            }
-        },
-        "response.Users": {
-            "description": "Send array of user to response.",
-            "type": "object",
-            "properties": {
-                "users": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.User"
-                    }
                 }
             }
         }

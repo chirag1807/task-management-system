@@ -16,17 +16,17 @@ func VerifyToken(flag int) func(handler http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
-			if token == "" {
-				errorhandling.SendErrorResponse(r, w, errorhandling.TokenNotFound, "")
+			if token == constant.EMPTY_STRING {
+				errorhandling.SendErrorResponse(r, w, errorhandling.TokenNotFound, constant.EMPTY_STRING)
 				return
 			}
 			token = token[7:]
 			userId, err := utils.VerifyJWTToken(token)
 			if err != nil {
 				if flag == 0 {
-					errorhandling.SendErrorResponse(r, w, errorhandling.AccessTokenExpired, "")
+					errorhandling.SendErrorResponse(r, w, errorhandling.AccessTokenExpired, constant.EMPTY_STRING)
 				} else {
-					errorhandling.SendErrorResponse(r, w, errorhandling.RefreshTokenExpired, "")
+					errorhandling.SendErrorResponse(r, w, errorhandling.RefreshTokenExpired, constant.EMPTY_STRING)
 				}
 				return
 			}

@@ -16,7 +16,7 @@ func TestUserRegistration(t *testing.T) {
 		Bio          string
 		Email        string
 		Password     string
-		Profile      string
+		Privacy      string
 		Expected     error
 		StatusCode   int
 	}{
@@ -27,7 +27,7 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana1807@gmail.com",
 			Password:     "Chirag123$",
-			Profile:      "Public",
+			Privacy:      "PUBLIC",
 			Expected:     nil,
 			StatusCode:   200,
 		},
@@ -38,7 +38,7 @@ func TestUserRegistration(t *testing.T) {
 			Bio:          "Junior Software Engineer",
 			Email:        "chiragmakwana1807@gmail.com",
 			Password:     "Chirag123$",
-			Profile:      "Public",
+			Privacy:      "PUBLIC",
 			Expected:     errorhandling.DuplicateEmailFound,
 			StatusCode:   409,
 		},
@@ -53,7 +53,7 @@ func TestUserRegistration(t *testing.T) {
 				Bio:       v.Bio,
 				Email:     v.Email,
 				Password:  v.Password,
-				Profile:   v.Profile,
+				Privacy:   v.Privacy,
 			}
 
 			_, err := NewAuthRepo(dbConn).UserRegistration(user)
@@ -102,7 +102,7 @@ func TestUserLogin(t *testing.T) {
 	}
 }
 
-func TestResetToken(t *testing.T) {
+func TestRefreshToken(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
 		Token        string
@@ -122,7 +122,7 @@ func TestResetToken(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			_, err := NewAuthRepo(dbConn).ResetToken(v.Token)
+			_, _, err := NewAuthRepo(dbConn).RefreshToken(v.Token)
 
 			assert.Equal(t, v.Expected, err)
 		})

@@ -31,7 +31,7 @@ func ProduceEmail(rabbitmqConn *amqp.Connection, userEmail dto.Email) (error) {
 
 	messageToProduce, _ := json.Marshal(userEmail)
 
-	err = ch.PublishWithContext(context.Background(), "", q.Name, false, false, amqp.Publishing{
+	err = ch.PublishWithContext(context.Background(), constant.EMPTY_STRING, q.Name, false, false, amqp.Publishing{
 		ContentType: "text/plain",
 		Body:        messageToProduce,
 	})
