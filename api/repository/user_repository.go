@@ -22,7 +22,7 @@ type UserRepository interface {
 	UpdateUserProfile(userId int64, userToUpdate request.UpdateUser) error
 	SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTime time.Time) (int64, error)
 	VerifyOTP(otpFromUser request.OTP) error
-	ResetUserPassword(userEmailPassword request.UserCredentials) error
+	ResetUserPassword(userPasswordWithOTPId request.UserPasswordWithOTPID) error
 	VerifyUserPassword(userPassword string, userId int64) error
 }
 
@@ -125,7 +125,7 @@ func (u userRepository) SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTim
 	if err != nil {
 		return 0, err
 	}
-	rows = tx.QueryRow(ctx, `INSERT INTO otps (otp, otp_expire_time) VALUES ($1, $2) RETURNING id`, OTP, OTPExpireTime)
+	rows = tx.QueryRow(ctx, `INSERT INTO otps (otp, otp_expire_time, email) VALUES ($1, $2, $3) RETURNING id`, OTP, OTPExpireTime, userEmail.To)
 	err = rows.Scan(&databaseOTPId)
 	if err != nil {
 		tx.Rollback(ctx)
@@ -152,7 +152,7 @@ func (u userRepository) VerifyOTP(otpFromUser request.OTP) error {
 	}
 	defer rows.Close()
 	if rows.Next() {
-		if err := rows.Scan(&dbOTP.ID, &dbOTP.OTP, &dbOTP.OTPExpiryTime); err != nil {
+		if err := rows.Scan(&dbOTP.ID, &dbOTP.OTP, &dbOTP.OTPExpiryTime, &dbOTP.Email, &dbOTP.IsVerified); err != nil {
 			return err
 		}
 		if time.Until(dbOTP.OTPExpiryTime) < 0 {
@@ -160,6 +160,10 @@ func (u userRepository) VerifyOTP(otpFromUser request.OTP) error {
 		} else if dbOTP.OTP != otpFromUser.OTP {
 			return errorhandling.OTPNotMatched
 		} else {
+			_, err := u.dbConn.Exec(context.Background(), "UPDATE otps SET is_verified = $1 WHERE id = $2", true, otpFromUser.ID)
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 	} else {
@@ -167,17 +171,35 @@ func (u userRepository) VerifyOTP(otpFromUser request.OTP) error {
 	}
 }
 
-func (u userRepository) ResetUserPassword(userEmailPassword request.UserCredentials) error {
+func (u userRepository) ResetUserPassword(userPasswordWithOTPId request.UserPasswordWithOTPID) error {
 	// var userCount int
 	// u.dbConn.QueryRow(context.Background(), `SELECT COUNT(*) FROM users where email = $1`, userEmailPassword.Email).Scan(&userCount)
 	// if userCount == 0 {
 	// 	return errorhandling.NoEmailFound
 	// }
-	_, err := u.dbConn.Exec(context.Background(), "UPDATE users SET password = $1 WHERE email = $2", userEmailPassword.Password, userEmailPassword.Email)
+	var dbEmail string
+	var isOTPVerified bool
+	rows, err := u.dbConn.Query(context.Background(), `SELECT email, is_verified FROM otps where id = $1`, userPasswordWithOTPId.ID)
 	if err != nil {
 		return err
 	}
-	return nil
+	defer rows.Close()
+	if rows.Next() {
+		if err := rows.Scan(&dbEmail, &isOTPVerified); err != nil {
+			return err
+		}
+		if !isOTPVerified {
+			return errorhandling.OTPVerificationTimeExpired
+		} else {
+			_, err := u.dbConn.Exec(context.Background(), "UPDATE users SET password = $1 WHERE email = $2", userPasswordWithOTPId.Password, dbEmail)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+	} else {
+		return errorhandling.NoOTPIDFound
+	}
 }
 
 func (u userRepository) VerifyUserPassword(userPassword string, userId int64) error {

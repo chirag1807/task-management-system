@@ -65,7 +65,7 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 
 	err = json.Unmarshal(body, &userRequest)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.CreateCustomError(err.Error(), http.StatusText(http.StatusBadRequest)), constant.EMPTY_STRING)
+		errorhandling.HandleJSONUnmarshlError(r, w, err)
 		return
 	}
 
@@ -129,7 +129,7 @@ func (a authController) UserLogin(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &userLoginRequest)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
+		errorhandling.HandleJSONUnmarshlError(r, w, err)
 		return
 	}
 

@@ -206,6 +206,92 @@ const docTemplate = `{
             }
         },
         "/api/v1/tasks": {
+            "get": {
+                "description": "Get all tasks of user based on query parameters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tasks"
+                ],
+                "summary": "Get all tasks",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "return tasks created by you if createdByMe set to true otherwise false.",
+                        "name": "createdByMe",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of tasks to return per page (default 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search term to filter tasks",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tasks by status (TO-DO, In-PROGRESS, COMPLETED, CLOSED)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Sort tasks by create time (true for ascending, false for descending)",
+                        "name": "sortByFilter",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tasks fetched successfully.",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.Task"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "CreateTask API is made for creating a new task in the task manager application.",
                 "consumes": [
@@ -393,12 +479,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
                     },
-                    "422": {
-                        "description": "Task is closed",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -496,16 +576,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/tasks/{Flag}": {
+        "/api/v1/teams": {
             "get": {
-                "description": "Get all tasks of user based on query parameters",
+                "description": "Get all teams of user based on query parameters",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "tasks"
+                    "teams"
                 ],
-                "summary": "Get all tasks",
+                "summary": "Get all teams",
                 "parameters": [
                     {
                         "type": "string",
@@ -516,10 +596,10 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "Flag indicating 0 means tasks created by user and 1 means tasks assigned to user.",
-                        "name": "Flag",
-                        "in": "path",
+                        "type": "boolean",
+                        "description": "return teams created by you if createdByMe set to true otherwise false.",
+                        "name": "createdByMe",
+                        "in": "query",
                         "required": true
                     },
                     {
@@ -541,25 +621,19 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "Filter tasks by status (TO-DO, In-PROGRESS, COMPLETED, CLOSED)",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
                         "type": "boolean",
                         "description": "Sort tasks by create time (true for ascending, false for descending)",
-                        "name": "sortByFilter",
+                        "name": "sortByCreatedAt",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Tasks fetched successfully.",
+                        "description": "Teams fetched successfully.",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/response.Task"
+                                "$ref": "#/definitions/response.Team"
                             }
                         }
                     },
@@ -575,12 +649,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
                     },
-                    "422": {
-                        "description": "Provide valid flag",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -588,9 +656,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/api/v1/teams": {
+            },
             "post": {
                 "description": "CreateTeam API is made for creating a new team in the task manager application.",
                 "consumes": [
@@ -689,8 +755,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/teams/leave/{TeamID}": {
+            "delete": {
+                "description": "Removes user from particular team",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "teams"
+                ],
+                "summary": "Leave Team",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "Bearer \u003caccess_token\u003e",
+                        "description": "Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID of team whose members you want.",
+                        "name": "TeamID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Team left successfully.",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "you are not a member of that team.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "Either refresh token not found or token is expired.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/teams/members": {
-            "put": {
+            "post": {
                 "description": "Add members to a team based on provided parameters",
                 "consumes": [
                     "application/json"
@@ -829,150 +950,13 @@ const docTemplate = `{
                         }
                     },
                     "403": {
-                        "description": "Not allowed to add members.",
+                        "description": "Not allowed to remove members.",
                         "schema": {
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
                     },
                     "500": {
                         "description": "Internal server error.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/teams/{Flag}": {
-            "get": {
-                "description": "Get all teams of user based on query parameters",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "teams"
-                ],
-                "summary": "Get all teams",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003caccess_token\u003e",
-                        "description": "Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Flag indicating 0 means teams created by user and 1 means teams in which user were added.",
-                        "name": "Flag",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Number of tasks to return per page (default 10)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset for pagination (default 0)",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Search term to filter tasks",
-                        "name": "search",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Sort tasks by create time (true for ascending, false for descending)",
-                        "name": "sortByCreatedAt",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Teams fetched successfully.",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/response.Team"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "401": {
-                        "description": "Either refresh token not found or token is expired.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "422": {
-                        "description": "Provide valid flag",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/teams/{TeamID}": {
-            "delete": {
-                "description": "Removes user from particular team",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "teams"
-                ],
-                "summary": "Leave Team",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "default": "Bearer \u003caccess_token\u003e",
-                        "description": "Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "ID of team whose members you want.",
-                        "name": "TeamID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Team left successfully.",
-                        "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Either refresh token not found or token is expired or you are not a member of that team.",
-                        "schema": {
-                            "$ref": "#/definitions/errorhandling.CustomError"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
@@ -1169,7 +1153,7 @@ const docTemplate = `{
                         }
                     },
                     "401": {
-                        "description": "Either password not matched or need to left from all teams or token expired.",
+                        "description": "Either password not matched or token expired.",
                         "schema": {
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
@@ -1279,9 +1263,9 @@ const docTemplate = `{
                 "summary": "reset user password",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Email of the user",
-                        "name": "email",
+                        "type": "integer",
+                        "description": "ID which you've received in response of SendOTPToUser API",
+                        "name": "id",
                         "in": "formData",
                         "required": true
                     },
@@ -1302,6 +1286,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad request.",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandling.CustomError"
+                        }
+                    },
+                    "401": {
+                        "description": "OTP not verified with our system.",
                         "schema": {
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
@@ -1413,7 +1403,7 @@ const docTemplate = `{
                             "$ref": "#/definitions/errorhandling.CustomError"
                         }
                     },
-                    "403": {
+                    "410": {
                         "description": "OTP verification time expired.",
                         "schema": {
                             "$ref": "#/definitions/errorhandling.CustomError"
@@ -1433,13 +1423,13 @@ const docTemplate = `{
         "errorhandling.CustomError": {
             "type": "object",
             "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "Bad request"
+                },
                 "error": {
                     "type": "string",
                     "example": "Corresponding Error Message will Show Here"
-                },
-                "statuscode": {
-                    "type": "integer",
-                    "example": 0
                 }
             }
         },
@@ -1535,32 +1525,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "Team Jupiter"
                 },
-                "teamMembers": {
-                    "$ref": "#/definitions/response.TeamMembers"
-                },
                 "teamPrivacy": {
                     "type": "string",
                     "example": "PUBLIC"
-                }
-            }
-        },
-        "response.TeamMembers": {
-            "description": "Send team's id and it's all members id to the response.",
-            "type": "object",
-            "properties": {
-                "memberIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    },
-                    "example": [
-                        954751326021189800,
-                        954751326021189801
-                    ]
-                },
-                "teamId": {
-                    "type": "integer",
-                    "example": 954751326021189633
                 }
             }
         },

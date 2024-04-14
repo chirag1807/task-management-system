@@ -19,6 +19,15 @@ type UserCredentials struct {
 	Password string `json:"password" db:"password" example:"Chirag123$" validate:"required,min=8"`
 }
 
+// UserPasswordWithOTPID model info
+// @Description User password and id stored in otps table used for verifing user at the time of reseting its password.
+type UserPasswordWithOTPID struct {
+	ID       int64  `json:"id" example:"974751326021189896" validate:"required,number"`
+	Password string `json:"password" db:"password" example:"Chirag123$" validate:"required,min=8"`
+}
+
+// UserEmail model info
+// @Description User email used for send otp in case of reset password.
 type UserEmail struct {
 	Email string `json:"email" db:"email" example:"chiragmakwana@gmail.com" validate:"required,email"`
 }

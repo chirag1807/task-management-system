@@ -35,9 +35,9 @@ func TestGetAllPublicPrivacyUsers(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/user/get-public-profile-users", NewUserController(userService).GetAllPublicPrivacyUsers)
+			r.Get("/api/v1/users/public-privacy", NewUserController(userService).GetAllPublicPrivacyUsers)
 
-			req, err := http.NewRequest("GET", "/api/user/get-public-profile-users", http.NoBody)
+			req, err := http.NewRequest("GET", "/api/v1/users/public-privacy", http.NoBody)
 			if err != nil {
 				log.Println(err)
 			}
@@ -72,9 +72,9 @@ func TestGetMyDetails(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/user/get-my-details", NewUserController(userService).GetMyDetails)
+			r.Get("/api/v1/users/profile", NewUserController(userService).GetMyDetails)
 
-			req, err := http.NewRequest("GET", "/api/user/get-my-details", http.NoBody)
+			req, err := http.NewRequest("GET", "/api/v1/users/profile", http.NoBody)
 			if err != nil {
 				log.Println(err)
 			}
@@ -144,7 +144,7 @@ func TestUpdateUserProfile(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/user/update-user-profile", NewUserController(userService).UpdateUserProfile)
+			r.Put("/api/v1/users/profile", NewUserController(userService).UpdateUserProfile)
 
 			user := request.User{
 				FirstName: v.FirstName,
@@ -158,7 +158,7 @@ func TestUpdateUserProfile(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("POST", "/api/user/update-user-profile", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("PUT", "/api/v1/users/profile", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
@@ -204,7 +204,7 @@ func TestSendOTPToUser(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/user/send-otp-to-user", NewUserController(userService).SendOTPToUser)
+			r.Post("/api/v1/users/send-otp", NewUserController(userService).SendOTPToUser)
 
 			user := request.User{
 				Email: v.Email,
@@ -213,7 +213,7 @@ func TestSendOTPToUser(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("POST", "/api/user/send-otp-to-user", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("POST", "/api/v1/users/send-otp", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
@@ -262,7 +262,7 @@ func TestVerifyOTP(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/user/verify-otp", NewUserController(userService).VerifyOTP)
+			r.Post("/api/v1/users/verify-otp", NewUserController(userService).VerifyOTP)
 
 			user := request.OTP{
 				ID:  v.OTPID,
@@ -272,7 +272,7 @@ func TestVerifyOTP(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("POST", "/api/user/verify-otp", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("POST", "/api/v1/users/verify-otp", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
@@ -325,7 +325,7 @@ func TestResetUserPassword(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Put("/api/user/reset-user-password", NewUserController(userService).ResetUserPassword)
+			r.Put("/api/v1/users/reset-password", NewUserController(userService).ResetUserPassword)
 
 			user := request.User{
 				Email:    v.Email,
@@ -335,7 +335,7 @@ func TestResetUserPassword(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("PUT", "/api/user/reset-user-password", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("PUT", "/api/v1/users/reset-password", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}

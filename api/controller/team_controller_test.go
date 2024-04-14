@@ -55,7 +55,7 @@ func TestCreateTeam(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/team/create-team", NewTeamController(teamService).CreateTeam)
+			r.Post("/api/v1/teams", NewTeamController(teamService).CreateTeam)
 
 			task := request.CreateTeam{
 				Details: request.Team{
@@ -68,7 +68,7 @@ func TestCreateTeam(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("POST", "/api/team/create-team", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("POST", "/api/v1/teams", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
@@ -117,7 +117,7 @@ func TestAddMembersToTeam(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Put("/api/team/add-members-to-team", NewTeamController(teamService).AddMembersToTeam)
+			r.Post("/api/v1/teams/members", NewTeamController(teamService).AddMembersToTeam)
 
 			task := request.TeamMembersWithTeamID{
 				TeamID:   v.TeamID,
@@ -127,7 +127,7 @@ func TestAddMembersToTeam(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("PUT", "/api/team/add-members-to-team", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("POST", "/api/v1/teams/members", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
@@ -169,7 +169,7 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Put("/api/team/remove-members-from-team", NewTeamController(teamService).RemoveMembersFromTeam)
+			r.Delete("/api/v1/teams/members", NewTeamController(teamService).RemoveMembersFromTeam)
 
 			task := request.TeamMembersWithTeamID{
 				TeamID:   v.TeamID,
@@ -179,7 +179,7 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("PUT", "/api/team/remove-members-from-team", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("DELETE", "/api/v1/teams/members", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
@@ -198,7 +198,6 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 func TestGetAllTeams(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
-		Flag         int
 		UserId       int64
 		QueryParams  request.TeamQueryParams
 		Expected     interface{}
@@ -206,9 +205,9 @@ func TestGetAllTeams(t *testing.T) {
 	}{
 		{
 			TestCaseName: "Team Created By Me - Success",
-			Flag:         0,
 			UserId:       954488202459119617,
 			QueryParams: request.TeamQueryParams{
+				CreatedByMe: true,
 				Limit:          1,
 				Offset:         0,
 				Search:         "",
@@ -218,9 +217,9 @@ func TestGetAllTeams(t *testing.T) {
 		},
 		{
 			TestCaseName: "Team in Which I were Added - Success",
-			Flag:         1,
 			UserId:       954488202459119617,
 			QueryParams: request.TeamQueryParams{
+				CreatedByMe: false,
 				Limit:          1,
 				Offset:         0,
 				Search:         "",
@@ -232,20 +231,18 @@ func TestGetAllTeams(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/task/get-all-teams/:Flag", NewTeamController(teamService).GetAllTeams)
+			r.Get("/api/v1/teams", NewTeamController(teamService).GetAllTeams)
 
-			req, err := http.NewRequest("GET", "/api/task/get-all-teams/:Flag", http.NoBody)
+			req, err := http.NewRequest("GET", "/api/v1/teams", http.NoBody)
 			if err != nil {
 				log.Println(err)
 			}
 
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("Flag", strconv.Itoa(v.Flag))
-			ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
-			ctx = context.WithValue(ctx, constant.UserIdKey, v.UserId)
+			ctx := context.WithValue(req.Context(), constant.UserIdKey, v.UserId)
 			req = req.WithContext(ctx)
 
 			q := req.URL.Query()
+			q.Add("createdByMe", strconv.FormatBool(v.QueryParams.CreatedByMe))
 			q.Add("limit", strconv.Itoa(v.QueryParams.Limit))
 			q.Add("offset", strconv.Itoa(v.QueryParams.Offset))
 			q.Add("search", v.QueryParams.Search)
@@ -281,9 +278,9 @@ func TestGetTeamMembers(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/task/get-team-members/:TeamID", NewTeamController(teamService).GetTeamMembers)
+			r.Get("/api/v1/teams/:TeamID/members", NewTeamController(teamService).GetTeamMembers)
 
-			req, err := http.NewRequest("GET", "/api/task/get-team-members/:TeamID", http.NoBody)
+			req, err := http.NewRequest("GET", "/api/v1/teams/:TeamID/members", http.NoBody)
 			if err != nil {
 				log.Println(err)
 			}
@@ -324,9 +321,9 @@ func TestLeftTeam(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/task/left-team/:TeamID", NewTeamController(teamService).LeaveTeam)
+			r.Get("/api/v1/teams/leave/:TeamID", NewTeamController(teamService).LeaveTeam)
 
-			req, err := http.NewRequest("GET", "/api/task/left-team/:TeamID", http.NoBody)
+			req, err := http.NewRequest("GET", "/api/v1/teams/leave/:TeamID", http.NoBody)
 			if err != nil {
 				log.Println(err)
 			}

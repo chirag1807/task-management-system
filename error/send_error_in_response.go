@@ -12,9 +12,9 @@ import (
 // and for those errors, which are not defined in global error handling,
 // it will simply send 'Internal Server Error' as error message and 500 as status code.
 func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, message string, params ...interface{}) {
-	if _, ok := err.(CustomError); ok {
+	if error, ok := err.(CustomError); ok {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		// w.WriteHeader(error.Code)
+		w.WriteHeader(error.HttpStatusCode)
 		config.LoggerInstance.Warning(err.Error())
 
 	} else if error, ok := err.(RequestDataValidationError); ok {
@@ -25,7 +25,8 @@ func SendErrorResponse(r *http.Request, w http.ResponseWriter, err error, messag
 		fmt.Println(err)
 		// config.LoggerInstance.Error(r, err, message, params...)
 		err = CustomError{
-			Code:   http.StatusText(http.StatusInternalServerError),
+			ErrorCode:   http.StatusText(http.StatusInternalServerError),
+			HttpStatusCode: http.StatusInternalServerError,
 			ErrorMessage: "Internal Server Error",
 		}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -88,7 +88,7 @@ func TestCreateTask(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/task/create-task", NewTaskController(taskService).CreateTask)
+			r.Post("/api/v1/tasks", NewTaskController(taskService).CreateTask)
 
 			task := request.Task{
 				Title:              v.Title,
@@ -103,7 +103,7 @@ func TestCreateTask(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("POST", "/api/task/create-task", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("POST", "/api/v1/tasks", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
@@ -122,7 +122,6 @@ func TestCreateTask(t *testing.T) {
 func TestGetAllTasks(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
-		Flag         int
 		UserId       int64
 		QueryParams  request.TaskQueryParams
 		Expected     interface{}
@@ -130,9 +129,9 @@ func TestGetAllTasks(t *testing.T) {
 	}{
 		{
 			TestCaseName: "Task Created By Me - Success",
-			Flag:         0,
 			UserId:       954488202459119617,
 			QueryParams: request.TaskQueryParams{
+				CreatedByMe: false,
 				Limit:        1,
 				Offset:       0,
 				Search:       "",
@@ -143,9 +142,9 @@ func TestGetAllTasks(t *testing.T) {
 		},
 		{
 			TestCaseName: "Task Assigned To Me - Success",
-			Flag:         1,
 			UserId:       954488202459119617,
 			QueryParams: request.TaskQueryParams{
+				CreatedByMe: true,
 				Limit:        1,
 				Offset:       0,
 				Search:       "",
@@ -156,9 +155,9 @@ func TestGetAllTasks(t *testing.T) {
 		},
 		{
 			TestCaseName: "Field Must Be In Enum Values.",
-			Flag:         1,
 			UserId:       954488202459119617,
 			QueryParams: request.TaskQueryParams{
+				CreatedByMe: true,
 				Limit:        1,
 				Offset:       0,
 				Search:       "",
@@ -171,20 +170,18 @@ func TestGetAllTasks(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/task/get-all-tasks/:Flag", NewTaskController(taskService).GetAllTasks)
+			r.Get("/api/v1/tasks", NewTaskController(taskService).GetAllTasks)
 
-			req, err := http.NewRequest("GET", "/api/task/get-all-tasks/:Flag", http.NoBody)
+			req, err := http.NewRequest("GET", "/api/v1/tasks", http.NoBody)
 			if err != nil {
 				log.Println(err)
 			}
 
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("Flag", strconv.Itoa(v.Flag))
-			ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
-			ctx = context.WithValue(ctx, constant.UserIdKey, v.UserId)
+			ctx := context.WithValue(req.Context(), constant.UserIdKey, v.UserId)
 			req = req.WithContext(ctx)
 
 			q := req.URL.Query()
+			q.Add("createdByMe", strconv.FormatBool(v.QueryParams.CreatedByMe))
 			q.Add("limit", strconv.Itoa(v.QueryParams.Limit))
 			q.Add("offset", strconv.Itoa(v.QueryParams.Offset))
 			q.Add("search", v.QueryParams.Search)
@@ -236,9 +233,9 @@ func TestGetTasksofTeam(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Get("/api/task/get-tasks-of-team/:TeamID", NewTaskController(taskService).GetTasksofTeam)
+			r.Get("/api/v1/tasks/team/:TeamID", NewTaskController(taskService).GetTasksofTeam)
 
-			req, err := http.NewRequest("GET", "/api/task/get-tasks-of-team/:TeamID", http.NoBody)
+			req, err := http.NewRequest("GET", "/api/v1/tasks/team/:TeamID", http.NoBody)
 			if err != nil {
 				log.Println(err)
 			}
@@ -337,7 +334,7 @@ func TestUpdateTask(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Put("/api/task/update-task", NewTaskController(taskService).UpdateTask)
+			r.Put("/api/v1/tasks/", NewTaskController(taskService).UpdateTask)
 
 			task := request.Task{
 				ID: v.ID,
@@ -353,7 +350,7 @@ func TestUpdateTask(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("PUT", "/api/task/update-task", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("PUT", "/api/v1/tasks", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}

@@ -195,14 +195,14 @@ func TestVerifyOTP(t *testing.T) {
 func TestResetUserPassword(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
-		Email        string
+		ID           int64
 		Password     string
 		Expected     interface{}
 		StatusCode   int
 	}{
 		{
 			TestCaseName: "Password Reset Done Successfully.",
-			Email:        "dhyey@gmail.com",
+			ID:           954537852771565569,
 			Password:     "Dhyey123$",
 			Expected:     nil,
 			StatusCode:   200,
@@ -211,11 +211,11 @@ func TestResetUserPassword(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			userEmailPassword := request.UserCredentials{
-				Email: v.Email,
+			userPasswordWithOTPId := request.UserPasswordWithOTPID{
+				ID:       v.ID,
 				Password: v.Password,
 			}
-			err := NewUserRepo(dbConn, rabbitmqConn).ResetUserPassword(userEmailPassword)
+			err := NewUserRepo(dbConn, rabbitmqConn).ResetUserPassword(userPasswordWithOTPId)
 			assert.Equal(t, v.Expected, err)
 		})
 	}

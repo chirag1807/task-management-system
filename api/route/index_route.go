@@ -60,7 +60,7 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn 
 		r.Route("/teams", func(r chi.Router) {
 			r.Use(middleware.VerifyToken(0))
 			r.Post("/", teamController.CreateTeam)
-			r.Put("/{TeamID}/members", teamController.AddMembersToTeam)
+			r.Post("/{TeamID}/members", teamController.AddMembersToTeam)
 			r.Delete("/{TeamID}/members", teamController.RemoveMembersFromTeam)
 			r.Get("/", teamController.GetAllTeams)
 			r.Get("/{TeamID}/members", teamController.GetTeamMembers)

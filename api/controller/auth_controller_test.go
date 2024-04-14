@@ -106,7 +106,7 @@ func TestUserRegistration(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/auth/user-registration", NewAuthController(authService).UserRegistration)
+			r.Post("/api/v1/auth/registration", NewAuthController(authService).UserRegistration)
 
 			user := request.User{
 				FirstName: v.FirstName,
@@ -121,7 +121,7 @@ func TestUserRegistration(t *testing.T) {
 				
 				log.Println(err)
 			}
-			req, err := http.NewRequest("POST", "/api/auth/user-registration", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("POST", "/api/v1/auth/registration", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
@@ -180,14 +180,14 @@ func TestUserLogin(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/auth/user-login", NewAuthController(authService).UserLogin)
+			r.Post("/api/v1/auth/login", NewAuthController(authService).UserLogin)
 
 			user := request.User{
 				Email:    v.Email,
 				Password: v.Password,
 			}
 			jsonValue, _ := json.Marshal(user)
-			req, _ := http.NewRequest("POST", "/api/auth/user-login", bytes.NewBuffer(jsonValue))
+			req, _ := http.NewRequest("POST", "/api/v1/auth/login", bytes.NewBuffer(jsonValue))
 			req.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()
@@ -217,9 +217,9 @@ func TestResetToken(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/auth/reset-token", NewAuthController(authService).RefreshToken)
+			r.Post("/api/v1/auth/refresh-token", NewAuthController(authService).RefreshToken)
 
-			req, _ := http.NewRequest("POST", "/api/auth/reset-token", http.NoBody)
+			req, _ := http.NewRequest("POST", "/api/v1/auth/refresh-token", http.NoBody)
 			ctx := context.WithValue(req.Context(), constant.TokenKey, v.Token)
 			req = req.WithContext(ctx)
 			w := httptest.NewRecorder()

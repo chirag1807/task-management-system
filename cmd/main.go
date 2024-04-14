@@ -27,7 +27,7 @@ func main() {
 	defer dbConn.Close(context.Background())
   
 	socketServer := socket.SocketConnection()
-	port := fmt.Sprintf(":%d", config.Config.Port)
+	port := fmt.Sprintf("localhost:%d", config.Config.Port)
 
 	docs.SwaggerInfo.Title = "Task Manager API Documentation"
 	docs.SwaggerInfo.Description = "This is a swagger demo api documentation."

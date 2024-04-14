@@ -15,7 +15,7 @@ type UserService interface {
 	UpdateUserProfile(userId int64, userToUpdate request.UpdateUser) error
 	SendOTPToUser(userEmail dto.Email, OTP int, OTPExpireTime time.Time) (int64, error)
 	VerifyOTP(otpFromUser request.OTP) error
-	ResetUserPassword(userEmailPassword request.UserCredentials) error
+	ResetUserPassword(userPasswordWithOTPId request.UserPasswordWithOTPID) error
 	VerifyUserPassword(userPassword string, userId int64) error
 }
 
@@ -49,8 +49,8 @@ func (u userService) VerifyOTP(otpFromUser request.OTP) error {
 	return u.userRepository.VerifyOTP(otpFromUser)
 }
 
-func (u userService) ResetUserPassword(userEmailPassword request.UserCredentials) error {
-	return u.userRepository.ResetUserPassword(userEmailPassword)
+func (u userService) ResetUserPassword(userPasswordWithOTPId request.UserPasswordWithOTPID) error {
+	return u.userRepository.ResetUserPassword(userPasswordWithOTPId)
 }
 
 func (u userService) VerifyUserPassword(userPassword string, userId int64) error {

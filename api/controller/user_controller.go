@@ -58,7 +58,7 @@ func (u userController) GetAllPublicPrivacyUsers(w http.ResponseWriter, r *http.
 	decoder := schema.NewDecoder()
 	err := decoder.Decode(&userQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, constant.EMPTY_STRING)
+		errorhandling.HandleSchemaDecodeError(r, w, err)
 		return
 	}
 
@@ -116,7 +116,7 @@ func (u userController) GetMyDetails(w http.ResponseWriter, r *http.Request) {
 // @Param privacy formData string false "Privacy of the user (PUBLIC, PRIVATE)"
 // @Success 200 {object} response.SuccessResponse "User Updated successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request."
-// @Failure 401 {object} errorhandling.CustomError "Either password not matched or need to left from all teams or token expired."
+// @Failure 401 {object} errorhandling.CustomError "Either password not matched or token expired."
 // @Failure 404 {object} errorhandling.CustomError "No user found."
 // @Failure 409 {object} errorhandling.CustomError "Duplicate email found."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
@@ -133,7 +133,7 @@ func (u userController) UpdateUserProfile(w http.ResponseWriter, r *http.Request
 
 	err = json.Unmarshal(body, &userToUpdate)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
+		errorhandling.HandleJSONUnmarshlError(r, w, err)
 		return
 	}
 
@@ -198,7 +198,7 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &userEmail)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
+		errorhandling.HandleJSONUnmarshlError(r, w, err)
 		return
 	}
 
@@ -247,7 +247,7 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} response.SuccessResponse "OTP Verifies successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request."
 // @Failure 401 {object} errorhandling.CustomError "OTP not matched."
-// @Failure 403 {object} errorhandling.CustomError "OTP verification time expired."
+// @Failure 410 {object} errorhandling.CustomError "OTP verification time expired."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/users/verify-otp [post]
 func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
@@ -262,7 +262,7 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &otp)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
+		errorhandling.HandleJSONUnmarshlError(r, w, err)
 		return
 	}
 
@@ -292,14 +292,15 @@ func (u userController) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Tags users
-// @Param email formData string true "Email of the user"
+// @Param id formData int64 true "ID which you've received in response of SendOTPToUser API"
 // @Param password formData string true "New password of the user"
 // @Success 200 {object} response.SuccessResponse "Password reset done successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request."
+// @Failure 401 {object} errorhandling.CustomError "OTP not verified with our system."
 // @Failure 500 {object} errorhandling.CustomError "Internal server error."
 // @Router /api/v1/users/reset-password [put]
 func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request) {
-	var userEmailPassword request.UserCredentials
+	var userPasswordWithOTPId request.UserPasswordWithOTPID
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -308,21 +309,21 @@ func (u userController) ResetUserPassword(w http.ResponseWriter, r *http.Request
 	}
 	defer r.Body.Close()
 
-	err = json.Unmarshal(body, &userEmailPassword)
+	err = json.Unmarshal(body, &userPasswordWithOTPId)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
+		errorhandling.HandleJSONUnmarshlError(r, w, err)
 		return
 	}
 
 	r.Body = io.NopCloser(bytes.NewReader(body))
 
-	err = utils.Validate.Struct(userEmailPassword)
+	err = utils.Validate.Struct(userPasswordWithOTPId)
 	if err != nil {
 		errorhandling.HandleInvalidRequestData(w, r, err, utils.Translator)
 		return
 	}
 
-	err = u.userService.ResetUserPassword(userEmailPassword)
+	err = u.userService.ResetUserPassword(userPasswordWithOTPId)
 	if err != nil {
 		errorhandling.SendErrorResponse(r, w, err, utils.CreateErrorMessage())
 		return

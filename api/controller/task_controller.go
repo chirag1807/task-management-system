@@ -68,7 +68,7 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &taskToCreate)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
+		errorhandling.HandleJSONUnmarshlError(r, w, err)
 		return
 	}
 
@@ -113,16 +113,15 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} []response.Task "Tasks fetched successfully."
 // @Failure 400 {object} errorhandling.CustomError "Bad request"
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
-// @Failure 422 {object} errorhandling.CustomError "Provide valid flag"
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
-// @Router /api/v1/tasks/{Flag} [get]
+// @Router /api/v1/tasks [get]
 func (t taskController) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	var taskQueryParams request.TaskQueryParams
 
 	decoder := schema.NewDecoder()
 	err := decoder.Decode(&taskQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.CreateCustomError(err.Error(), http.StatusText(http.StatusBadRequest)), constant.EMPTY_STRING)
+		errorhandling.HandleSchemaDecodeError(r, w, err)
 		return
 	}
 
@@ -168,7 +167,7 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 	decoder := schema.NewDecoder()
 	err := decoder.Decode(&taskQueryParams, r.URL.Query())
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadQueryParamsError, constant.EMPTY_STRING)
+		errorhandling.HandleSchemaDecodeError(r, w, err)
 		return
 	}
 
@@ -219,7 +218,6 @@ func (t taskController) GetTasksofTeam(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} errorhandling.CustomError "Either refresh token not found or token is expired."
 // @Failure 403 {object} errorhandling.CustomError "Not allowed to update task"
 // @Failure 404 {object} errorhandling.CustomError "Task not found"
-// @Failure 422 {object} errorhandling.CustomError "Task is closed"
 // @Failure 500 {object} errorhandling.CustomError "Internal server error"
 // @Router /api/v1/tasks/ [put]
 func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
@@ -234,7 +232,7 @@ func (t taskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &taskToUpdate)
 	if err != nil {
-		errorhandling.SendErrorResponse(r, w, errorhandling.ReadDataError, constant.EMPTY_STRING)
+		errorhandling.HandleJSONUnmarshlError(r, w, err)
 		return
 	}
 
