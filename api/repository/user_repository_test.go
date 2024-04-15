@@ -165,7 +165,7 @@ func TestVerifyOTP(t *testing.T) {
 		StatusCode   int
 	}{
 		{
-			TestCaseName: "OTP Sent Successfully.",
+			TestCaseName: "OTP Verified Successfully.",
 			OTP:          1099,
 			ID:           954537852771565569,
 			Expected:     nil,

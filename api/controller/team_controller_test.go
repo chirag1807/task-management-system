@@ -117,7 +117,7 @@ func TestAddMembersToTeam(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Post("/api/v1/teams/members", NewTeamController(teamService).AddMembersToTeam)
+			r.Post("/api/v1/teams/:TeamID/members", NewTeamController(teamService).AddMembersToTeam)
 
 			task := request.TeamMembersWithTeamID{
 				TeamID:   v.TeamID,
@@ -127,12 +127,15 @@ func TestAddMembersToTeam(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("POST", "/api/v1/teams/members", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("POST", "/api/v1/teams/:TeamID/members", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
 			req.Header.Set("Content-Type", "application/json")
-			ctx := context.WithValue(req.Context(), constant.UserIdKey, v.GroupCreatedByID)
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("TeamID", strconv.Itoa(int(v.TeamID)))
+			ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+			ctx = context.WithValue(ctx, constant.UserIdKey, v.GroupCreatedByID)
 			req = req.WithContext(ctx)
 
 			w := httptest.NewRecorder()
@@ -169,7 +172,7 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Delete("/api/v1/teams/members", NewTeamController(teamService).RemoveMembersFromTeam)
+			r.Delete("/api/v1/teams/:TeamID/members", NewTeamController(teamService).RemoveMembersFromTeam)
 
 			task := request.TeamMembersWithTeamID{
 				TeamID:   v.TeamID,
@@ -179,12 +182,15 @@ func TestRemoveMembersFromTeam(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("DELETE", "/api/v1/teams/members", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("DELETE", "/api/v1/teams/:TeamID/members", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
 			req.Header.Set("Content-Type", "application/json")
-			ctx := context.WithValue(req.Context(), constant.UserIdKey, v.GroupCreatedByID)
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("TeamID", strconv.Itoa(int(v.TeamID)))
+			ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+			ctx = context.WithValue(ctx, constant.UserIdKey, v.GroupCreatedByID)
 			req = req.WithContext(ctx)
 
 			w := httptest.NewRecorder()
@@ -314,8 +320,14 @@ func TestLeftTeam(t *testing.T) {
 		{
 			TestCaseName: "Team Left Successfully",
 			TeamID:       954507580144451585,
+			UserID:       954488202459119617,
+			StatusCode:   200,
+		},
+		{
+			TestCaseName: "Can not Left Team Because Not a Member",
+			TeamID:       954507580144451585,
 			UserID:       954497896847212545,
-			StatusCode:   401,
+			StatusCode:   400,
 		},
 	}
 

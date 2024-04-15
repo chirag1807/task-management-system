@@ -8,6 +8,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestRefreshToken(t *testing.T) {
+	testCases := []struct {
+		TestCaseName string
+		Token        string
+		Expected     interface{}
+	}{
+		{
+			TestCaseName: "Token Rest Done Successfully.",
+			Token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc",
+			Expected:     nil,
+		},
+		{
+			TestCaseName: "Refresh Token Error",
+			Token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+			Expected:     errorhandling.RefreshTokenNotFound,
+		},
+	}
+
+	for _, v := range testCases {
+		t.Run(v.TestCaseName, func(t *testing.T) {
+			_, _, err := NewAuthRepo(dbConn).RefreshToken(v.Token)
+
+			assert.Equal(t, v.Expected, err)
+		})
+	}
+}
+
 func TestUserRegistration(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
@@ -96,33 +123,6 @@ func TestUserLogin(t *testing.T) {
 				Password: v.Password,
 			}
 			_, _, err := NewAuthRepo(dbConn).UserLogin(user)
-
-			assert.Equal(t, v.Expected, err)
-		})
-	}
-}
-
-func TestRefreshToken(t *testing.T) {
-	testCases := []struct {
-		TestCaseName string
-		Token        string
-		Expected     interface{}
-	}{
-		{
-			TestCaseName: "Token Rest Done Successfully.",
-			Token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTE3OTMxMjUsInVzZXJJZCI6Ijk1MzkzNDU1MzI1NDEwMDk5MyJ9.vFcrOMncN7y8nBkWV6iULeafZLp73z7kNZDzb2e0-PM",
-			Expected:     nil,
-		},
-		{
-			TestCaseName: "Refresh Token Error",
-			Token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
-			Expected:     errorhandling.RefreshTokenNotFound,
-		},
-	}
-
-	for _, v := range testCases {
-		t.Run(v.TestCaseName, func(t *testing.T) {
-			_, _, err := NewAuthRepo(dbConn).RefreshToken(v.Token)
 
 			assert.Equal(t, v.Expected, err)
 		})

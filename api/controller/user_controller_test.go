@@ -146,7 +146,7 @@ func TestUpdateUserProfile(t *testing.T) {
 		t.Run(v.TestCaseName, func(t *testing.T) {
 			r.Put("/api/v1/users/profile", NewUserController(userService).UpdateUserProfile)
 
-			user := request.User{
+			user := request.UpdateUser{
 				FirstName: v.FirstName,
 				LastName:  v.LastName,
 				Bio:       v.Bio,
@@ -206,7 +206,7 @@ func TestSendOTPToUser(t *testing.T) {
 		t.Run(v.TestCaseName, func(t *testing.T) {
 			r.Post("/api/v1/users/send-otp", NewUserController(userService).SendOTPToUser)
 
-			user := request.User{
+			user := request.UserEmail{
 				Email: v.Email,
 			}
 			jsonValue, err := json.Marshal(user)
@@ -289,36 +289,29 @@ func TestVerifyOTP(t *testing.T) {
 func TestResetUserPassword(t *testing.T) {
 	testCases := []struct {
 		TestCaseName string
-		Email        string
+		OTPID        int64
 		Password     string
 		Expected     interface{}
 		StatusCode   int
 	}{
 		{
 			TestCaseName: "Password Reset Done Successfully.",
-			Email:        "dhyey@gmail.com",
+			OTPID:        954537852771565569,
 			Password:     "Dhyey123$",
 			Expected:     "User Registration Done Successfully.",
 			StatusCode:   200,
 		},
 		{
 			TestCaseName: "Field Must be Required",
-			Email:        "dhyey@gmail.com",
+			OTPID:        954537852771565569,
 			Expected:     "password is required field.",
 			StatusCode:   400,
 		},
 		{
 			TestCaseName: "Field Must be of Minimum Length",
-			Email:        "dhyey@gmail.com",
+			OTPID:        954537852771565569,
 			Password:     "Dhyey",
 			Expected:     "lastName violates minimum length constraint.",
-			StatusCode:   400,
-		},
-		{
-			TestCaseName: "Invalid Email",
-			Email:        "dhyeypanchal2204",
-			Password:     "Dhyey123$",
-			Expected:     "please provide email in valid format.",
 			StatusCode:   400,
 		},
 	}
@@ -327,8 +320,8 @@ func TestResetUserPassword(t *testing.T) {
 		t.Run(v.TestCaseName, func(t *testing.T) {
 			r.Put("/api/v1/users/reset-password", NewUserController(userService).ResetUserPassword)
 
-			user := request.User{
-				Email:    v.Email,
+			user := request.UserPasswordWithOTPID{
+				ID: v.OTPID,
 				Password: v.Password,
 			}
 			jsonValue, err := json.Marshal(user)

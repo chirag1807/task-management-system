@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/chirag1807/task-management-system/api/model/request"
@@ -31,6 +32,7 @@ func NewAuthRepo(dbConn *pgx.Conn) AuthRepository {
 
 func (a authRepository) UserRegistration(user request.User) (int64, error) {
 	var userID int64
+	fmt.Println(user.Email)
 	rows := a.dbConn.QueryRow(context.Background(), `INSERT INTO users (first_name, last_name, bio, email, password, privacy) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, user.FirstName, user.LastName, user.Bio, user.Email, user.Password, user.Privacy)
 	err := rows.Scan(&userID)
 	if err != nil {
