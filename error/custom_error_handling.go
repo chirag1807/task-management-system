@@ -32,6 +32,7 @@ func CreateCustomError(errorMessage string, errorCode string, httpStatusCode int
 var (
 	AccessTokenExpired                = CreateCustomError("Access Token is Expired, Please Regenrate It.", http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	DuplicateEmailFound               = CreateCustomError("Duplicate Email Found.", http.StatusText(http.StatusConflict), http.StatusConflict)
+	FirstVerifyOTP                    = CreateCustomError("First Verify OTP with Our System", http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	LeftAllTeamsToMakePrivacyPrivate  = CreateCustomError("You must Left All Teams that You are Part of to Make Your Privacy Private.", http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	MemberExist                       = CreateCustomError("Member Already Added in Team.", http.StatusText(http.StatusConflict), http.StatusConflict)
 	NoUserFound                       = CreateCustomError("No User Found for This Request.", http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -40,9 +41,9 @@ var (
 	NoTaskFound                       = CreateCustomError("No Task Found For This Request.", http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	NotAllowed                        = CreateCustomError("You are not Allowed to Perform this Task.", http.StatusText(http.StatusForbidden), http.StatusForbidden)
 	NotAMember                        = CreateCustomError("You can not Left the Meeting Because You are Not a Member of This Team.", http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-	FirstVerifyOTP                    = CreateCustomError("First Verify OTP with Our System", http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 	OTPVerificationTimeExpired        = CreateCustomError("Sorry, Time for OTP Verification has expired.", http.StatusText(http.StatusGone), http.StatusGone)
 	OTPNotMatched                     = CreateCustomError("You have Entered Wrong OTP, Try Again with Correct OTP.", http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+	OnlyOneAssignee                   = CreateCustomError("Either Assignee Team or Assignee Individual should be Present", http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	OnlyPublicMemberAllowed           = CreateCustomError("Only Public Profile Users can be Added in Team.", http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	OnlyPublicUserAssignne            = CreateCustomError("Tasks can be Assgined to Only Public Profile Users.", http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	OnlyPublicTeamAssignne            = CreateCustomError("Tasks can be Assgined to Only Public Profile Teams.", http.StatusText(http.StatusBadRequest), http.StatusBadRequest)

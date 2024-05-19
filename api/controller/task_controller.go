@@ -80,6 +80,10 @@ func (t taskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if (taskToCreate.AssigneeIndividual != nil && taskToCreate.AssigneeTeam != nil) || (taskToCreate.AssigneeIndividual == nil && taskToCreate.AssigneeTeam == nil) {
+		errorhandling.SendErrorResponse(r, w, errorhandling.OnlyOneAssignee, constant.EMPTY_STRING)
+	}
+
 	userId := r.Context().Value(constant.UserIdKey).(int64)
 	taskToCreate.CreatedAt = time.Now().UTC()
 	taskToCreate.CreatedBy = userId

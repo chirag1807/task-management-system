@@ -41,7 +41,8 @@ func NewTaskRepo(dbConn *pgx.Conn, redisClient *redis.Client, socketServer *sock
 func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 	var dbUserPrivacy string
 	var dbTeamPrivacy string
-
+	
+	fmt.Println(taskToCreate.AssigneeTeam)
 	if taskToCreate.AssigneeIndividual != nil {
 		rows := t.dbConn.QueryRow(context.Background(), `SELECT privacy FROM users WHERE id = $1`, *taskToCreate.AssigneeIndividual)
 		err := rows.Scan(&dbUserPrivacy)
@@ -61,6 +62,7 @@ func (t taskRepository) CreateTask(taskToCreate request.Task) (int64, error) {
 			return 0, errorhandling.OnlyPublicTeamAssignne
 		}
 	}
+
 
 	var taskId int64
 	err := t.dbConn.QueryRow(context.Background(), `INSERT INTO tasks (title, description, deadline, assignee_individual, assignee_team, status, priority,
@@ -202,6 +204,7 @@ func CreateQueryForParamsOfGetTask(query string, queryParams request.TaskQueryPa
 	}
 	query += fmt.Sprintf(" LIMIT %d", queryParams.Limit)
 	query += fmt.Sprintf(" OFFSET %d", queryParams.Offset)
+	fmt.Println(query)
 	return query
 }
 
@@ -219,7 +222,7 @@ func (t taskRepository) UpdateTask(taskToUpdate request.UpdateTask) error {
 		return err
 	}
 
-	if dbTask.Status == "Closed" {
+	if dbTask.Status == "CLOSED" {
 		return errorhandling.TaskClosed
 	}
 

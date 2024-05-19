@@ -38,7 +38,7 @@ func TestCreateTask(t *testing.T) {
 			Deadline:           time.Now().Add(3 * 24 * time.Hour),
 			AssigneeIndividual: func() *int64 { id := int64(954497896847212545); return &id }(),
 			Status:             "TO-DO",
-			Priority:           "High",
+			Priority:           "HIGH",
 			CreatedBy:          954488202459119617,
 			StatusCode:         200,
 		},
@@ -49,7 +49,7 @@ func TestCreateTask(t *testing.T) {
 			Deadline:           time.Now().Add(3 * 24 * time.Hour),
 			AssigneeIndividual: func() *int64 { id := int64(954497896847212545); return &id }(),
 			Status:             "TO-DO",
-			Priority:           "High",
+			Priority:           "HIGH",
 			CreatedBy:          954488202459119617,
 			StatusCode:         400,
 		},
@@ -59,7 +59,7 @@ func TestCreateTask(t *testing.T) {
 			Deadline:           time.Now().Add(3 * 24 * time.Hour),
 			AssigneeIndividual: func() *int64 { id := int64(954497896847212545); return &id }(),
 			Status:             "TO-DO",
-			Priority:           "High",
+			Priority:           "HIGH",
 			CreatedBy:          954488202459119617,
 			StatusCode:         400,
 		},
@@ -80,7 +80,7 @@ func TestCreateTask(t *testing.T) {
 			Description:  "This is Dummy Task For Test-Cases.",
 			Deadline:     time.Now().Add(3 * 24 * time.Hour),
 			Status:       "TO-DO",
-			Priority:     "Very Low",
+			Priority:     "VERY HIGH",
 			CreatedBy:    954488202459119617,
 			StatusCode:   400,
 		},
@@ -283,7 +283,7 @@ func TestUpdateTask(t *testing.T) {
 			Description:        "This is Dummy Task For Test-Cases.",
 			Deadline:           time.Now().Add(10 * 24 * time.Hour),
 			Status:             "TO-DO",
-			Priority:           "High",
+			Priority:           "HIGH",
 			CreatedBy:          954488202459119617,
 			StatusCode:         200,
 		},
@@ -294,7 +294,7 @@ func TestUpdateTask(t *testing.T) {
 			Deadline:           time.Now().Add(3 * 24 * time.Hour),
 			AssigneeIndividual: func() *int64 { id := int64(954497896847212545); return &id }(),
 			Status:             "TO-DO",
-			Priority:           "High",
+			Priority:           "HIGH",
 			CreatedBy:          954488202459119617,
 			StatusCode:         400,
 		},
@@ -334,10 +334,9 @@ func TestUpdateTask(t *testing.T) {
 
 	for _, v := range testCases {
 		t.Run(v.TestCaseName, func(t *testing.T) {
-			r.Put("/api/v1/tasks/", NewTaskController(taskService).UpdateTask)
+			r.Put("/api/v1/tasks/:TaskID", NewTaskController(taskService).UpdateTask)
 
-			task := request.Task{
-				ID: v.ID,
+			task := request.UpdateTask{
 				Title:              v.Title,
 				Description:        v.Description,
 				Deadline:           v.Deadline,
@@ -350,12 +349,16 @@ func TestUpdateTask(t *testing.T) {
 			if err != nil {
 				log.Println(err)
 			}
-			req, err := http.NewRequest("PUT", "/api/v1/tasks", bytes.NewBuffer(jsonValue))
+			req, err := http.NewRequest("PUT", "/api/v1/tasks/:TaskID", bytes.NewBuffer(jsonValue))
 			if err != nil {
 				log.Println(err)
 			}
+
 			req.Header.Set("Content-Type", "application/json")
-			ctx := context.WithValue(req.Context(), constant.UserIdKey, v.CreatedBy)
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("TaskID", strconv.Itoa(int(v.ID)))
+			ctx := context.WithValue(req.Context(), chi.RouteCtxKey, rctx)
+			ctx = context.WithValue(ctx, constant.UserIdKey, v.CreatedBy)
 			req = req.WithContext(ctx)
 
 			w := httptest.NewRecorder()

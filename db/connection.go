@@ -38,13 +38,12 @@ func SetDBConection(flag int) (*pgx.Conn, *redis.Client, *amqp.Connection) {
 		log.Fatal(err)
 	}
 
-	// rabbitmqConn, err := amqp.Dial("amqp://" + config.Config.RabbitMQ.Username + ":" + config.Config.RabbitMQ.Password + "@" + config.Config.RabbitMQ.Host + ":" + config.Config.RabbitMQ.Port + "/")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	rabbitmqConn := amqp.Connection{}
+	rabbitmqConn, err := amqp.Dial("amqp://" + config.Config.RabbitMQ.Username + ":" + config.Config.RabbitMQ.Password + "@" + config.Config.RabbitMQ.Host + ":" + config.Config.RabbitMQ.Port + "/")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	return dbConn, redisClient, &rabbitmqConn
+	return dbConn, redisClient, rabbitmqConn
 }
 
 func dbConnString() string {

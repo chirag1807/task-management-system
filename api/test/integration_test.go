@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,6 +19,7 @@ import (
 	"github.com/chirag1807/task-management-system/config"
 	"github.com/chirag1807/task-management-system/constant"
 	"github.com/chirag1807/task-management-system/db"
+	"github.com/chirag1807/task-management-system/utils"
 	"github.com/chirag1807/task-management-system/utils/socket"
 	"github.com/go-redis/redis/v8"
 	socketio "github.com/googollee/go-socket.io"
@@ -31,7 +33,7 @@ var redisClient *redis.Client
 var rabbitmqConn *amqp.Connection
 var socketServer *socketio.Server
 
-func runTestServer() *httptest.Server {
+func runTestServer() (*httptest.Server, *pgx.Conn) {
 	config.LoadConfig("../../.config/", "../../.config/secret.json")
 	dbConn, redisClient, rabbitmqConn = db.SetDBConection(1)
 	socketServer = socket.SocketConnection()
@@ -42,13 +44,31 @@ func runTestServer() *httptest.Server {
 	_ = loggerInstance.(logease.SlogLoggerInstance)
 
 	r := route.InitializeRouter(dbConn, redisClient, rabbitmqConn, socketServer)
-	return httptest.NewServer(r)
+
+	err = utils.ClearMockData(dbConn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tx, err := dbConn.BeginTx(context.Background(), pgx.TxOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tx, err = utils.InsertMockData(tx)
+	if err != nil {
+		tx.Rollback(context.Background())
+		log.Fatal(err)
+	}
+	tx.Commit(context.Background())
+
+	return httptest.NewServer(r), dbConn
 }
 
 func TestTaskCRUD(t *testing.T) {
 	buf := new(bytes.Buffer)
 	var id int64 = 0
-	ts := runTestServer()
+	ts, dbConn := runTestServer()
 	defer ts.Close()
 
 	t.Run("it should return ok when task creation done successfully.", func(t *testing.T) {
@@ -58,7 +78,7 @@ func TestTaskCRUD(t *testing.T) {
 			Deadline:           time.Now().Add(5 * 24 * time.Hour),
 			AssigneeIndividual: func() *int64 { userId := int64(954488202459119617); return &userId }(),
 			Status:             "TO-DO",
-			Priority:           "High",
+			Priority:           "HIGH",
 		}
 		jsonValue, err := json.Marshal(topic)
 		if err != nil {
@@ -66,11 +86,11 @@ func TestTaskCRUD(t *testing.T) {
 		}
 
 		client := &http.Client{}
-		req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/task/create-task", ts.URL), bytes.NewBuffer(jsonValue))
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/tasks", ts.URL), bytes.NewBuffer(jsonValue))
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 		req.Header.Add("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -94,11 +114,11 @@ func TestTaskCRUD(t *testing.T) {
 
 	t.Run("it should return tasks assigned to me.", func(t *testing.T) {
 		client := &http.Client{}
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/task/get-all-tasks/1", ts.URL), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/tasks?createdByMe=true", ts.URL), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -115,11 +135,11 @@ func TestTaskCRUD(t *testing.T) {
 
 	t.Run("it should return tasks created by me.", func(t *testing.T) {
 		client := &http.Client{}
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/task/get-all-tasks/0", ts.URL), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/tasks?createdByMe=false", ts.URL), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -135,19 +155,18 @@ func TestTaskCRUD(t *testing.T) {
 	})
 
 	t.Run("it should return ok when task update done successfully.", func(t *testing.T) {
-		topic := request.Task{
-			ID:          id,
+		topic := request.UpdateTask{
 			Title:       "Complete Integration Test",
 			Description: "Kindly Complete Integration Testing of Task Module.",
 		}
 		jsonValue, _ := json.Marshal(topic)
 
 		client := &http.Client{}
-		req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/task/update-task", ts.URL), bytes.NewBuffer(jsonValue))
+		req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/v1/tasks/%v", ts.URL, id), bytes.NewBuffer(jsonValue))
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 		req.Header.Add("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -162,12 +181,14 @@ func TestTaskCRUD(t *testing.T) {
 		fmt.Println(responseBody)
 		assert.Equal(t, 200, resp.StatusCode)
 	})
+
+	utils.ClearMockData(dbConn)
 }
 
 func TestTeamCRUD(t *testing.T) {
 	buf := new(bytes.Buffer)
 	var id int64 = 0
-	ts := runTestServer()
+	ts, dbConn := runTestServer()
 	defer ts.Close()
 
 	t.Run("it should return ok when team creation done successfully.", func(t *testing.T) {
@@ -182,11 +203,11 @@ func TestTeamCRUD(t *testing.T) {
 		}
 
 		client := &http.Client{}
-		req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/team/create-team", ts.URL), bytes.NewBuffer(jsonValue))
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/teams", ts.URL), bytes.NewBuffer(jsonValue))
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 		req.Header.Add("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -210,7 +231,6 @@ func TestTeamCRUD(t *testing.T) {
 
 	t.Run("it should return ok when team members added successfully.", func(t *testing.T) {
 		teamMembers := request.TeamMembersWithTeamID{
-			TeamID: id,
 			MemberIDs: []int64{
 				954497896847212545,
 			},
@@ -221,11 +241,11 @@ func TestTeamCRUD(t *testing.T) {
 		}
 
 		client := &http.Client{}
-		req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/team/add-members-to-team", ts.URL), bytes.NewBuffer(jsonValue))
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s/api/v1/teams/%v/members", ts.URL, id), bytes.NewBuffer(jsonValue))
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 		req.Header.Add("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -259,11 +279,11 @@ func TestTeamCRUD(t *testing.T) {
 		}
 
 		client := &http.Client{}
-		req, err := http.NewRequest("PUT", fmt.Sprintf("%s/api/team/remove-members-from-team", ts.URL), bytes.NewBuffer(jsonValue))
+		req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/api/v1/teams/%v/members", ts.URL, id), bytes.NewBuffer(jsonValue))
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 		req.Header.Add("Content-Type", "application/json")
 
 		resp, err := client.Do(req)
@@ -286,11 +306,11 @@ func TestTeamCRUD(t *testing.T) {
 
 	t.Run("it should return teams created by me.", func(t *testing.T) {
 		client := &http.Client{}
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/team/get-all-teams/0", ts.URL), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/teams?createdByMe=false", ts.URL), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -307,11 +327,11 @@ func TestTeamCRUD(t *testing.T) {
 
 	t.Run("it should return teams in which i were added.", func(t *testing.T) {
 		client := &http.Client{}
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/team/get-all-teams/1", ts.URL), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/teams?createdByMe=true", ts.URL), nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTIwMzY2ODgsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.AlUaCYNnpgw8Z15wneA5B_X1lwER6zZcs3S5jpfvnIA")
+		req.Header.Add("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc")
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -325,4 +345,7 @@ func TestTeamCRUD(t *testing.T) {
 		fmt.Println(responseBody)
 		assert.Equal(t, 200, resp.StatusCode)
 	})
+	
+	utils.ClearMockData(dbConn)
+
 }

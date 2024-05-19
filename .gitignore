@@ -7,6 +7,8 @@ vendor
 **/.history/**
 **/.idea/**
 **/.vscode/**
+coverage.html
+coverage.out
 cockroachdb-deployment.yaml
 cockroachdb-service.yaml
 rabbitmq-deployment.yaml

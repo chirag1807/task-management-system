@@ -79,6 +79,7 @@ func (a authController) UserRegistration(w http.ResponseWriter, r *http.Request)
 
 	if userRequest.Password != userRequest.ConfirmPassword {
 		errorhandling.SendErrorResponse(r, w, errorhandling.PasswordConfirmPasswordNotMatched, constant.EMPTY_STRING)
+		return
 	}
 
 	hashedPassword, err := utils.HashPassword(userRequest.Password)

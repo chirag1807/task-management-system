@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
@@ -212,6 +213,7 @@ func (u userController) SendOTPToUser(w http.ResponseWriter, r *http.Request) {
 
 	min, max := 1001, 9999
 	OTP := rand.Intn(max-min) + min
+	fmt.Println(OTP)
 
 	emailBody := utils.PrepareEmailBody(OTP)
 	email := dto.Email{

@@ -160,6 +160,7 @@ func (u userRepository) VerifyOTP(otpFromUser request.OTP) error {
 		} else if dbOTP.OTP != otpFromUser.OTP {
 			return errorhandling.OTPNotMatched
 		} else {
+			rows.Close()
 			_, err := u.dbConn.Exec(context.Background(), "UPDATE otps SET is_verified = $1 WHERE id = $2", true, otpFromUser.ID)
 			if err != nil {
 				return err
@@ -191,6 +192,7 @@ func (u userRepository) ResetUserPassword(userPasswordWithOTPId request.UserPass
 		if !isOTPVerified {
 			return errorhandling.OTPVerificationTimeExpired
 		} else {
+			rows.Close()
 			_, err := u.dbConn.Exec(context.Background(), "UPDATE users SET password = $1 WHERE email = $2", userPasswordWithOTPId.Password, dbEmail)
 			if err != nil {
 				return err

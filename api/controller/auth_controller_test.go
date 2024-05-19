@@ -16,80 +16,99 @@ import (
 
 func TestUserRegistration(t *testing.T) {
 	testCases := []struct {
-		TestCaseName string
-		FirstName    string
-		LastName     string
-		Bio          string
-		Email        string
-		Password     string
-		Privacy      string
-		Expected     interface{}
-		StatusCode   int
+		TestCaseName    string
+		FirstName       string
+		LastName        string
+		Bio             string
+		Email           string
+		Password        string
+		Confirmpassword string
+		Privacy         string
+		Expected        interface{}
+		StatusCode      int
 	}{
 		{
-			TestCaseName: "Registration Done Successfully.",
-			FirstName:    "Chirag",
-			LastName:     "Makwana",
-			Bio:          "Junior Software Engineer",
-			Email:        "chiragmakwana1807@gmail.com",
-			Password:     "Chirag123$",
-			Privacy:      "PUBLIC",
-			Expected:     "User Registration Done Successfully.",
-			StatusCode:   200,
+			TestCaseName:    "Registration Done Successfully.",
+			FirstName:       "Chirag",
+			LastName:        "Makwana",
+			Bio:             "Junior Software Engineer",
+			Email:           "chiragmakwana1807@gmail.com",
+			Password:        "Chirag123$",
+			Confirmpassword: "Chirag123$",
+			Privacy:         "PUBLIC",
+			Expected:        "User Registration Done Successfully.",
+			StatusCode:      200,
 		},
 		{
-			TestCaseName: "Field Must be Not Empty.",
-			FirstName:    "Chirag",
-			LastName:     "",
-			Bio:          "Junior Software Engineer",
-			Email:        "chiragmakwana1807@gmail.com",
-			Password:     "Chirag123$",
-			Privacy:      "PUBLIC",
-			Expected:     "lastName is required to not be empty.",
-			StatusCode:   400,
+			TestCaseName:    "Field Must be Not Empty.",
+			FirstName:       "Chirag",
+			LastName:        "",
+			Bio:             "Junior Software Engineer",
+			Email:           "chiragmakwana1807@gmail.com",
+			Password:        "Chirag123$",
+			Confirmpassword: "Chirag123$",
+			Privacy:         "PUBLIC",
+			Expected:        "lastName is required to not be empty.",
+			StatusCode:      400,
 		},
 		{
-			TestCaseName: "Field Must be Required",
-			FirstName:    "Chirag",
-			Bio:          "Junior Software Engineer",
-			Email:        "chiragmakwana1807@gmail.com",
-			Password:     "Chirag123$",
-			Privacy:      "PUBLIC",
-			Expected:     "lastName is required to not be empty.",
-			StatusCode:   400,
+			TestCaseName:    "Field Must be Required",
+			FirstName:       "Chirag",
+			Bio:             "Junior Software Engineer",
+			Email:           "chiragmakwana1807@gmail.com",
+			Password:        "Chirag123$",
+			Confirmpassword: "Chirag123$",
+			Privacy:         "PUBLIC",
+			Expected:        "lastName is required to not be empty.",
+			StatusCode:      400,
 		},
 		{
-			TestCaseName: "Field Must be of Minimum Length",
-			FirstName:    "Chirag",
-			LastName:     "M",
-			Bio:          "Junior Software Engineer",
-			Email:        "chiragmakwana1807@gmail.com",
-			Password:     "Chirag123$",
-			Privacy:      "PUBLIC",
-			Expected:     "lastName violates minimum length constraint.",
-			StatusCode:   400,
+			TestCaseName:    "Field Must be of Minimum Length",
+			FirstName:       "Chirag",
+			LastName:        "M",
+			Bio:             "Junior Software Engineer",
+			Email:           "chiragmakwana1807@gmail.com",
+			Password:        "Chirag123$",
+			Confirmpassword: "Chirag123$",
+			Privacy:         "PUBLIC",
+			Expected:        "lastName violates minimum length constraint.",
+			StatusCode:      400,
 		},
 		{
-			TestCaseName: "Invalid Email",
-			FirstName:    "Chirag",
-			LastName:     "Makwana",
-			Bio:          "Junior Software Engineer",
-			Email:        "chiragmakwana1807",
-			Password:     "Chirag123$",
-			Privacy:      "PUBLIC",
-			Expected:     "please provide email in valid format.",
-			StatusCode:   400,
+			TestCaseName:    "Invalid Email",
+			FirstName:       "Chirag",
+			LastName:        "Makwana",
+			Bio:             "Junior Software Engineer",
+			Email:           "chiragmakwana1807",
+			Password:        "Chirag123$",
+			Confirmpassword: "Chirag123$",
+			Privacy:         "PUBLIC",
+			Expected:        "please provide email in valid format.",
+			StatusCode:      400,
 		},
 		{
-			TestCaseName: "Duplicate Email",
-			FirstName:    "Chirag",
-			LastName:     "Makwana",
-			Bio:          "Junior Software Engineer",
-			Email:        "chiragmakwana1807@gmail.com",
-			Password:     "Chirag123$",
-			Privacy:      "PUBLIC",
-			Expected:     "Duplicate Email Found.",
-			StatusCode:   409,
+			TestCaseName:    "Password and Confirm Password not Matched.",
+			FirstName:       "Chirag",
+			LastName:        "Makwana",
+			Bio:             "Junior Software Engineer",
+			Email:           "chiragmakwana1807@gmail.com",
+			Password:        "Chirag123$",
+			Confirmpassword: "Chirag123",
+			Privacy:         "PUBLIC",
+			Expected:        "Password and Confirm Password Not Matched.",
+			StatusCode:      400,
+		},
+		{
+			TestCaseName:    "Duplicate Email",
+			FirstName:       "Chirag",
+			LastName:        "Makwana",
+			Bio:             "Junior Software Engineer",
+			Email:           "chiragmakwana1807@gmail.com",
+			Password:        "Chirag123$",
+			Confirmpassword: "Chirag123$",
+			Privacy:         "PUBLIC",
+			Expected:        "Duplicate Email Found.",
+			StatusCode:      409,
 		},
 		{
 			TestCaseName: "Value Must be in Enum Values.",
@@ -114,11 +133,12 @@ func TestUserRegistration(t *testing.T) {
 				Bio:       v.Bio,
 				Email:     v.Email,
 				Password:  v.Password,
+				ConfirmPassword: v.Confirmpassword,
 				Privacy:   v.Privacy,
 			}
 			jsonValue, err := json.Marshal(user)
 			if err != nil {
-				
+
 				log.Println(err)
 			}
 			req, err := http.NewRequest("POST", "/api/v1/auth/registration", bytes.NewBuffer(jsonValue))
@@ -205,13 +225,13 @@ func TestResetToken(t *testing.T) {
 	}{
 		{
 			TestCaseName: "Token Reset Done Successfully.",
-			Token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTE3OTMxMjUsInVzZXJJZCI6Ijk1MzkzNDU1MzI1NDEwMDk5MyJ9.vFcrOMncN7y8nBkWV6iULeafZLp73z7kNZDzb2e0-PM",
+			Token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDQ2OTE0OTMsInVzZXJJZCI6Ijk1NDQ4ODIwMjQ1OTExOTYxNyJ9.qi3BFn6UhmodlODzSNfGVxzLxjsCncM7GPvVZya5aLc",
 			StatusCode:   200,
 		},
 		{
 			TestCaseName: "Refresh Token Not Valid or Expired.",
 			Token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
-			StatusCode:   401,
+			StatusCode:   404,
 		},
 	}
 
