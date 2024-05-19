@@ -1,0 +1,25 @@
+body {
+  font-family: sans-serif;
+  margin: 20px;
+}
+
+h1,
+h2 {
+  margin: 10px 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  padding: 10px;
+  border: 1px solid #ddd;
+}
+
+th {
+  text-align: left;
+  background-color: #f2f2f2;
+}

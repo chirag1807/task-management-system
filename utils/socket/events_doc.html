@@ -1,0 +1,262 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket Event Documentation</title>
+  <style>
+    /* Add CSS styles for table, columns, etc. */
+  </style>
+</head>
+<body>
+  <header><h1>Socket Event Documentation</h1></header>
+  <nav>...</nav>
+  <main>
+    <h2>Socket Events</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Event Name</th>
+          <th>Description</th>
+          <th>Data Payload</th>
+          <th>Server-Side Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .SocketEvents }}
+          <tr>
+            <td>{{ .Name }}</td>
+            <td>{{ .Description }}</td>
+            <td>{{ .Payload }}</td>
+            <td>{{ .ServerAction }}</td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </main>
+  <footer>...</footer>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket Event Documentation</title>
+  <link rel="stylesheet" href="F:\GOLang Projects\Task Management System\utils\socket\events_doc.html"> </head>
+<body>
+  <header>
+    <h1>Socket Event Documentation</h1>
+    <p>This document describes the available socket events for our application.</p>
+  </header>
+  <nav>
+    </nav>
+  <main>
+    <h2>Introduction</h2>
+    <p>This documentation details the various socket events used in our application. These events facilitate communication between clients and the server.</p>
+    <h2>Event Table</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Event Name</th>
+          <th>Description</th>
+          <th>Data Payload</th>
+          <th>Server-Side Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .SocketEvents }}
+          <tr>
+            <td>{{ .Name }}</td>
+            <td>{{ .Description }}</td>
+            <td>{{ .Payload.String }}</td> <td>{{ .ServerAction }}</td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </main>
+  <footer>
+    <p>&copy; 2024 Your Company Name</p>
+  </footer>
+</body>
+</html> -->
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket Event Documentation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    header, footer {
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 1rem 0;
+    }
+    header h1, footer {
+      margin: 0;
+    }
+    nav {
+      background-color: #444;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    nav a {
+      color: #fff;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    main {
+      padding: 1rem;
+    }
+    h2 {
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    table thead {
+      background-color: #007BFF;
+      color: #fff;
+    }
+    table th, table td {
+      padding: 0.75rem;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    table tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    table tbody tr:hover {
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
+  <header><h1>Socket Event Documentation</h1></header>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#events">Events</a>
+    <a href="#actions">Actions</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <main>
+    <h2 id="events">Socket Events</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Event Name</th>
+          <th>Description</th>
+          <th>Data Payload</th>
+          <th>Server-Side Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .SocketEvents }}
+          <tr>
+            <td>{{ .Name }}</td>
+            <td>{{ .Description }}</td>
+            <td>{{ .Payload }}</td>
+            <td>{{ .ServerAction }}</td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </main>
+  <footer>&copy; 2024 Your Company. All rights reserved.</footer>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket Event Documentation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    header, footer {
+      background-color: #0e69e0;
+      color: #fff;
+      text-align: center;
+      padding: 1rem 0;
+    }
+    header h1, footer {
+      margin: 0;
+    }
+    nav {
+      background-color: #444;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    nav a {
+      color: #fff;
+      margin: 0 1rem;
+      text-decoration: none;
+    }
+    main {
+      padding: 1rem;
+    }
+    h2 {
+      color: #333;
+    }
+    .event {
+      background-color: #fff;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-radius: 5px;
+    }
+    .event h3 {
+      margin-top: 0;
+    }
+    .event p {
+      margin: 0.5rem 0;
+    }
+    .event strong {
+      display: inline-block;
+      width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <header><h1>Socket Event Documentation</h1></header>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#events">Events</a>
+    <a href="#actions">Actions</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <main>
+    <h2 id="events">Socket Events</h2>
+    {{ range .SocketEvents }}
+    <div class="event">
+      <h3>{{ .Name }}</h3>
+      <p><strong>Description:</strong> {{ .Description }}</p>
+      <p><strong>Data Payload:</strong> {{ .Payload }}</p>
+      <p><strong>Server-Side Actions:</strong> {{ .ServerAction }}</p>
+    </div>
+    {{ end }}
+  </main>
+  <footer>&copy; ZURU Tech HK Ltd 2024 — All Rights Reserved</footer>
+</body>
+</html>

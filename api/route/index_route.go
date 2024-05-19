@@ -80,5 +80,9 @@ func InitializeRouter(dbConn *pgx.Conn, redisClient *redis.Client, rabbitmqConn 
 		})
 	})
 
+	router.Route("/socket_events", func(r chi.Router) {
+		r.Get("/", socket.RenderSocketEventsDoc)
+	})
+
 	return router
 }
